@@ -3,7 +3,7 @@
 'use strict';
 const box=document.createElement('div');
 box.className='para-onboard';box.id='para-onboard';box.hidden=true;
-box.innerHTML=`<div class="ob-wrap"><header class="ob-top"><strong class="ob-logo">para.</strong><span class="ob-count" id="obCounter">01 / 02</span></header><div class="ob-main">
+box.innerHTML=`<div class="ob-wrap"><header class="ob-top"><strong class="ob-logo">para.</strong><span class="ob-count" id="obCounter">01 / 02</span><button type="button" class="ob-cancel" id="obCancel" hidden aria-label="Закрыть выбор группы">×</button></header><div class="ob-main">
 <section id="obChoose"><h1>Твои пары.<br>Без лишнего.</h1><p class="ob-intro">Один раз выбери группу — дальше сразу открываем твоё расписание.</p>
 <div class="ob-field"><label class="ob-label" for="obUniversity">Университет</label><select class="ob-select" id="obUniversity"><option value="safu">САФУ — Северный (Арктический) федеральный университет</option></select></div>
 <div class="ob-field"><label class="ob-label" for="obSchool">Высшая школа / институт</label><select class="ob-select" id="obSchool"><option value="">Все подразделения САФУ</option></select></div>
@@ -101,6 +101,7 @@ async function finish(){
    localStorage.setItem('para_editorial_v02',JSON.stringify(S.settings));
    localStorage.setItem('para_onboarding_complete_v1','1');
  }catch(_){}
+ window.PARA_SETUP_DONE=true;
  document.documentElement.classList.remove('para-first');
  box.hidden=true;document.querySelector('.shell').style.display='';
  S.week=0;S.expanded=null;tab('schedule');
@@ -119,10 +120,12 @@ e('obNext').addEventListener('click',async()=>{
  else await finish();
 });
 e('obBack').addEventListener('click',()=>{ticket++;switchStage(1);});
+e('obCancel').addEventListener('click',()=>{if(!window.PARA_SETUP_DONE)return;ticket++;box.hidden=true;document.documentElement.classList.remove('para-first');document.querySelector('.shell').style.display='';});
 async function open(){
  ticket++;group=null;window.PARA_SETUP_PAYLOAD=null;
  box.hidden=false;document.documentElement.classList.add('para-first');
  document.querySelector('.shell').style.display='none';
+ e('obCancel').hidden=!window.PARA_SETUP_DONE;
  switchStage(1);e('obQuery').value='';e('obSchool').value='';e('obHint').textContent='';
  await readCatalogue();e('obQuery').focus({preventScroll:true});
 }
