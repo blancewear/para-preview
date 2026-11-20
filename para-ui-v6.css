@@ -381,7 +381,7 @@ body .shell .nav svg{width:18px;height:18px;flex:0 0 auto}
 }
 #onboard .p2-pill.selected .p2-pill-teacher{color:#f0f0ec}
 .shell .header .para-logo,#onboard .p2-mini-logo,#onboard .p2-big-logo{
-  aspect-ratio:799 / 193;image-rendering:auto;
+  aspect-ratio:796 / 190;image-rendering:auto;
 }
 @media(max-width:360px){
   #onboard .p2-choice-options{gap:8px}
