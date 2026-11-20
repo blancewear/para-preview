@@ -20,6 +20,13 @@ class Safety(unittest.TestCase):
         self.assertEqual(len({x["stream"] for x in p["lessons"] if x["stream"]}),2)
         self.assertIn("Соколова М.Л.",[x["teacher"] for x in p["lessons"]])
         self.assertTrue(any("(подготовка к экзамену)" in x["subject"] for x in p["lessons"]))
+    def test_known_ruz_oddities(self):
+        html=sample().replace("Лекция История", "Дифференцированный зачет История")
+        html=html.replace("наб. Северной Двины, д. 17", "наб. Северной Двины, д. 17 3 4")
+        parsed=collector.parse(html,"171605")
+        special=[x for x in parsed["lessons"] if x["lesson_type"]=="Дифференцированный зачет"]
+        self.assertEqual(len(special),1)
+        self.assertEqual(special[0]["address"],"наб. Северной Двины, д. 17")
     def test_dotted_group(self):
         self.assertEqual(len(collector.parse(sample("1.5.15"),"1.5.15")["lessons"]),3)
     def test_wrong_group_rejected(self):
