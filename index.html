@@ -288,14 +288,38 @@ async function queryGroups(q,institutionId=''){
 function renderCourseStreams(){
  const host=$('courseStreams');if(!host)return;
  const subjects=new Map();
- for(const l of R.lessons){if(l.sub==='all')continue;const set=subjects.get(l.name)||new Set();set.add(l.sub);subjects.set(l.name,set)}
- const choices=[...subjects.entries()].filter(([_,values])=>values.size>1).sort((a,b)=>a[0].localeCompare(b[0],'ru'));
- host.innerHTML=choices.length?choices.map(([name,values],i)=>`<div class="course-stream"><label for="course-stream-${i}">${esc(name)}</label><select id="course-stream-${i}" data-course="${esc(name)}"><option value="all">Все потоки</option>${[...values].sort().map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('')}</select></div>`).join(''):'<div class="small">Для выбранной группы нет нескольких параллельных потоков в загруженном расписании.</div>';
- for(const select of host.querySelectorAll('[data-course]')){
-   const chosen=S.settings.streams?.[select.dataset.course]||'all';
-   select.value=[...select.options].some(x=>x.value===chosen)?chosen:'all';
-   select.addEventListener('change',()=>{if(!S.settings.streams||typeof S.settings.streams!=='object')S.settings.streams={};S.settings.streams[select.dataset.course]=select.value;persist();schedule()})
+ for(const lesson of R.lessons){
+   if(!lesson.sub||lesson.sub==='all')continue;
+   const set=subjects.get(lesson.name)||new Set();
+   for(const raw of String(lesson.sub).split(',')){
+     const value=raw.trim();
+     if(!value)continue;
+     // Do not offer another group's subgroup from a shared class stream.
+     if(/^[0-9]{5,7}_/.test(value)&&!value.startsWith(S.settings.group+'_'))continue;
+     set.add(value);
+   }
+   if(set.size)subjects.set(lesson.name,set);
  }
+ const choices=[...subjects.entries()].filter(([_,values])=>values.size>1).sort((a,b)=>a[0].localeCompare(b[0],'ru'));
+ function shortLabel(value,subject){
+   const subgroup=value.match(/_(\d{2})$/);
+   if(!/иностранн.*язык/i.test(subject)&&subgroup)return 'Подгруппа '+Number(subgroup[1]);
+   const german=value.match(/^ИЯ_Немецкий_(\d+)$/i);
+   if(german)return 'Немецкий · поток '+Number(german[1]);
+   const stream=value.match(/_№(\d+)/);
+   if(stream)return 'Поток №'+stream[1];
+   return value;
+ }
+ host.innerHTML=choices.length?choices.map(([subject,options],index)=>'<div class="course-stream"><label for="course-stream-'+index+'">'+esc(subject)+'</label><select id="course-stream-'+index+'" data-course="'+esc(subject)+'"><option value="all">Все потоки</option>'+[...options].sort((a,b)=>a.localeCompare(b,'ru',{numeric:true})).map(value=>'<option value="'+esc(value)+'">'+esc(shortLabel(value,subject))+'</option>').join('')+'</select></div>').join(''):'<div class="clean-message">Нет отдельных потоков</div>';
+ host.querySelectorAll('[data-course]').forEach(select=>{
+   const chosen=S.settings.streams?.[select.dataset.course]||'all';
+   select.value=[...select.options].some(option=>option.value===chosen)?chosen:'all';
+   select.onchange=()=>{
+     if(!S.settings.streams||typeof S.settings.streams!=='object')S.settings.streams={};
+     S.settings.streams[select.dataset.course]=select.value;
+     persist();schedule();
+   };
+ });
 }
 
 const R={mode:'demo',lessons:[],groupSourceId:null,lastSuccess:null,sourceStatus:'unknown',monday:(()=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d})()};
