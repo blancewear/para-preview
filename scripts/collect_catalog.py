@@ -123,6 +123,14 @@ def collect(get=fetch, nap=lambda t: time.sleep(t)):
     institutes = schools(get(ROOT))
     if len(institutes) < 8:
         raise ValueError('Incomplete institution index')
+    # The university maintains a separately addressable official RUZ college
+    # catalogue which is not always linked from the main index. Verify its
+    # group page as part of the same atomic catalogue refresh.
+    if not any(str(item['id']) == '21' for item in institutes):
+        institutes.append({
+            'id': '21',
+            'name': 'Технологический колледж Императора Петра I',
+        })
     by_id = {}
     for index, school in enumerate(institutes):
         if index:
