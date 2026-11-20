@@ -18,11 +18,11 @@ new vm.Script(setup,{filename:'onboarding-v2.js'});
 const logo = fs.readFileSync('para-logo.svg','utf8');
 assert.ok(logo.includes('viewBox="0 0 796 190"') && logo.includes('fill-rule="evenodd"'),'Approved logo vector is missing');
 assert.equal((html.match(/class="logo para-logo"/g)||[]).length,3,'Every app tab must use the approved logo');
-assert.ok(setup.includes('class="p2-big-logo" src="./para-logo.svg?v=4"'),'First-run splash uses approved logo');
+assert.ok(setup.includes('class="p2-big-logo" src="./para-logo-draw.svg?v=1"'),'First-run splash uses approved logo');
 assert.ok(setup.includes('class="p2-mini-logo" src="./para-logo.svg?v=4"'),'First-run navigation uses approved logo');
-assert.ok(html.includes('onboarding-v2.js?v=11'),'Staged onboarding script must be included');
+assert.ok(html.includes('onboarding-v2.js?v=12'),'Staged onboarding script must be included');
 assert.ok(html.includes('onboarding-v2.css?v=6'),'Staged onboarding CSS must be included');
-assert.ok(html.includes('para-ui-v6.css?v=6'),'Bounded app stylesheet must be included');
+assert.ok(html.includes('para-ui-v6.css?v=7'),'Bounded app stylesheet must be included');
 assert.ok(html.includes('aria-current="page"'), 'Active tab must have accessibility state');
 assert.ok(html.includes("e.setAttribute('aria-current','page')"),'Tab switches must update accessibility state');
 assert.ok(html.includes('aria-pressed='),'Day selection must expose state');
@@ -30,7 +30,12 @@ assert.ok(html.includes('monthFmt.format(b)'),'Compact week range must use month
 assert.ok(appCss.includes('para-tab-in'),'Tab transitions must use a stable opacity animation');
 assert.ok(setup.includes("var shouldSetup=!completed||forced"),"Completed users must see a logo intro without losing their schedule");
 assert.ok(setup.includes("root.classList.add('p2-intro-out')"),"Returning users must dismiss intro");
-assert.ok(appCss.includes("para-wordmark-reveal"),"Wordmark reveal animation missing");
+const drawLogo = fs.readFileSync('para-logo-draw.svg','utf8');
+assert.ok(setup.includes('2700'),'Intro must wait for actual stroke drawing');
+assert.ok(drawLogo.includes('stroke-dashoffset') && drawLogo.includes('stroke-dasharray'),'Logo letters must draw along SVG strokes');
+assert.ok(drawLogo.includes('mask="url(#ink-p)"') && drawLogo.includes('mask="url(#ink-dot)"'),'All glyphs require independent stroke masks');
+assert.ok(drawLogo.includes('prefers-reduced-motion:reduce'),'Drawing must respect reduced-motion');
+assert.ok(!appCss.includes('para-wordmark-reveal'),'Horizontal wipe animation must not return');
 assert.ok(appCss.includes("body:has(#onboard.p2-intro-out) .shell"),"Background must be visible during fade");
 assert.ok(logo.includes('translate(0.5 0.5)'),"Smoothed vector contour must use subpixel alignment");
 
