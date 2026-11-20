@@ -11,6 +11,20 @@ assert.ok(scripts.length >= 2, 'Embedded preview and app scripts must exist');
 for (const [i, match] of scripts.entries()) {
   new vm.Script(match[1], {filename: 'index-inline-' + i + '.js'});
 }
+const setup = fs.readFileSync('onboarding.js','utf8');
+const setupCss = fs.readFileSync('onboarding.css','utf8');
+new vm.Script(setup,{filename:'onboarding.js'});
+assert.ok(html.includes('onboarding.js'), 'First-run setup script is not included');
+assert.ok(html.includes('onboarding.css'), 'First-run setup CSS is not included');
+assert.ok(html.includes("if(window.PARA_SETUP_DONE){loadInstitutions();tab('schedule');fetchSchedule()}"),
+  'The default group must not be loaded before a student chooses their group');
+assert.ok(setup.includes("para_onboarding_complete_v1"),'Onboarding must persist its completion');
+assert.ok(setup.includes('S.settings.groupId=newId'),'Selection must save exact RUZ ID');
+assert.ok(setup.includes('S.settings.streams'),'Per-subject stream choices must be stored');
+assert.ok(setup.includes('groupData.filter'),'Client-side group lookup is required for speed');
+assert.ok(setup.includes('window.PARA_SETUP_PAYLOAD'),'Setup should reuse the verified snapshot');
+assert.ok(setup.includes('obCancel'),'Changing groups must be cancellable');
+assert.ok(setupCss.includes('max-width:649px'),'Mobile sizing must be separate from desktop');
 assert.ok(html.includes('PARA_SCHEDULE_REQUEST'), 'Group switches must invalidate stale requests');
 assert.ok(html.includes('if(!current())return'), 'Async responses must check the latest group request');
 assert.ok(html.includes('String(saved.groupId)===String(id)'), 'Offline cache must be tied to RUZ ID');
