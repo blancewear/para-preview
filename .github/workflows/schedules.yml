@@ -25,7 +25,9 @@ permissions:
 # Read-only PR checks never wait behind a long full-university sweep.
 concurrency:
   group: ${{ github.event_name == 'pull_request' && format('para-ruz-review-{0}', github.ref) || 'para-schedule-data' }}
-  cancel-in-progress: false
+  # Replace obsolete 90-minute pilot crawls and stale pending refreshes.
+  # Never allow an old sequential collector to block the new full publisher.
+  cancel-in-progress: ${{ github.event_name != 'pull_request' }}
 
 jobs:
   verify:
