@@ -27,5 +27,30 @@ class CollegeCatalog(unittest.TestCase):
         self.assertTrue(any(s["id"] == "21" for s in result["institutions"]))
 
 
+    def test_explicit_official_course_and_study_form_follow_headings(self):
+        page = """
+        <h3>Очная форма обучения</h3><h4>1 курс</h4>
+        <a href="/?group=22001&timetable=">121601 Математика</a>
+        <h4>2 курс</h4>
+        <a href="/?group=22002&timetable=">121501 Физика</a>
+        <h3>Заочная форма обучения</h3><h4>3 курс</h4>
+        <a href="/?group=22003&timetable=">121401 Право</a>
+        """
+        rows = mod.groups(page, "15")
+        self.assertEqual([x["course"] for x in rows], [1, 2, 3])
+        self.assertEqual([x["study_form"] for x in rows], ["очная", "очная", "заочная"])
+
+    def test_unconfirmed_course_is_never_guessed_from_group_number(self):
+        rows = mod.groups('<a href="/?group=22004&timetable=">121601 Студенты</a>', "15")
+        self.assertIsNone(rows[0]["course"])
+
+    def test_container_course_marker_overrides_current_course_heading(self):
+        page = """
+        <h4>1 курс</h4>
+        <div data-course="4"><a href="/?group=22005&timetable=">121301 Физика</a></div>
+        """
+        self.assertEqual(mod.groups(page, "15")[0]["course"], 4)
+
+
 if __name__ == "__main__":
     unittest.main()
