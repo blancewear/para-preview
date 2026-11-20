@@ -57,6 +57,22 @@ def schools(html):
     return list(found.values())
 
 
+def clean_program(label, group_number, offset):
+    """Keep specializations while removing RUZ's duplicated display labels."""
+    value = label[offset:].strip(' -–—')
+    def drop_repeated_number(text):
+        if text.startswith(group_number) and (len(text) == len(group_number) or text[len(group_number)] in ' .-'):
+            return text[len(group_number):].lstrip(' .-')
+        return text
+    value = drop_repeated_number(value)
+    if value.endswith(')') and ' (' in value:
+        before, inside = value.rsplit(' (', 1)
+        inside = drop_repeated_number(inside[:-1])
+        if before.strip().casefold() == inside.strip().casefold():
+            value = before.strip()
+    return value or None
+
+
 def groups(html, institute):
     p = Links()
     p.feed(html)
@@ -73,7 +89,7 @@ def groups(html, institute):
             'id': gid,
             'number': number,
             'institution_id': institute,
-            'program': label[m.end():].strip(' -–—()') or None,
+            'program': clean_program(label, number, m.end()),
         })
     return list(found.values())
 
