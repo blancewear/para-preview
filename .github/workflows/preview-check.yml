@@ -40,7 +40,13 @@ jobs:
           assert "p2-count" not in js
           assert "p2-kicker" not in js
           app = Path("para-ui-v6.css").read_text()
-          assert 'para-ui-v6.css?v=2' in html
+          assert 'para-ui-v6.css?v=3' in html
+          assert 'aria-current="page"' in html
+          assert "e.setAttribute('aria-current','page')" in html
+          assert 'aria-pressed=' in html
+          assert 'monthFmt.format(b)' in html
+          assert 'para-tab-in' in app
+          assert 'prefers-reduced-motion:reduce' in app
           assert 'app-shell-v3.css?v=2' not in html
           assert 'mobile-layout-v5.css?v=1' not in html
           assert 'height:100dvh' in app
