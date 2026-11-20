@@ -5,6 +5,7 @@ on:
   schedule:
     - cron: '23 3 * * *'
   push:
+    branches: [main]
     paths:
       - 'scripts/collect_catalog.py'
       - '.github/workflows/catalog.yml'
@@ -34,5 +35,6 @@ jobs:
           git add catalog.json
           if ! git diff --cached --quiet; then
             git commit -m 'data: refresh verified SAFU group catalogue'
-            git push
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi
