@@ -15,7 +15,7 @@ function button(label,disabled){
 }
 function render(title,kicker,body,footer,back){
  frame.className='p2-frame';
- frame.innerHTML='<div class="p2-top"><div class="p2-top-left">'+(back?'<button type="button" id="p2Back" class="p2-back" aria-label="Назад">←</button>':'<img class="p2-mini-logo" src="./para-logo.svg?v=3" alt="para.">')+'</div></div>'+
+ frame.innerHTML='<div class="p2-top"><div class="p2-top-left">'+(back?'<button type="button" id="p2Back" class="p2-back" aria-label="Назад">←</button>':'<img class="p2-mini-logo" src="./para-logo.svg?v=4" alt="para.">')+'</div></div>'+
  '<div class="p2-body p2-enter"><div class="p2-heading"><h1 class="p2-title">'+title+'</h1></div><div class="p2-body-inner">'+body+'</div></div>'+
  '<div class="p2-bottom">'+(footer||'')+'</div>';
  if(back)el('p2Back').onclick=function(){go(P.step-1)};
@@ -239,12 +239,30 @@ function boot(){
  var forced=new URLSearchParams(location.search).get('setup')==='1';
  var completed=false;
  try{completed=localStorage.getItem('para_onboarding_complete_v1')==='1'&&!!JSON.parse(localStorage.getItem('para_editorial_v02')||'null').groupId}catch(e){}
- if(completed&&!forced)return;
+ var shouldSetup=!completed||forced;
+ var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  document.documentElement.classList.add('para-first');
- root.classList.remove('hidden');
+ root.classList.remove('hidden','p2-intro-out','p2-leave');
  frame.className='p2-frame p2-splash';
- frame.innerHTML='<img class="p2-big-logo" src="./para-logo.svg?v=3" alt="para.">';
- setTimeout(function(){if(root.classList.contains('hidden'))return;go(0)},window.matchMedia('(prefers-reduced-motion: reduce)').matches?150:1250);
+ frame.innerHTML='<img class="p2-big-logo" src="./para-logo.svg?v=4" alt="para.">';
+ setTimeout(function(){
+  if(root.classList.contains('hidden')||!frame.classList.contains('p2-splash'))return;
+  if(shouldSetup){
+   frame.classList.add('p2-intro-leave');
+   setTimeout(function(){
+    if(root.classList.contains('hidden')||!frame.classList.contains('p2-splash'))return;
+    frame.classList.remove('p2-intro-leave');
+    go(0);
+   },reduced?0:230);
+  }else{
+   root.classList.add('p2-intro-out');
+   setTimeout(function(){
+    root.classList.add('hidden');
+    root.classList.remove('p2-intro-out');
+    document.documentElement.classList.remove('para-first');
+   },reduced?0:350);
+  }
+ },reduced?90:1550);
 }
 boot();
 })();
