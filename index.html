@@ -264,6 +264,17 @@ if(!window.PARA_SETUP_DONE)document.documentElement.classList.add('para-first');
 const S={tab:'schedule',selected:(new Date().getDay()+6)%7,week:0,offline:false,expanded:null,settings:{group:'171605',groupId:'21096',institutionId:'28',streams:{},subgroup:'all',vk:'',reminders:true,minutes:'20',scope:'first',changes:true,rooms:true}};
 try{const saved=JSON.parse(localStorage.getItem('para_editorial_v02'));if(saved&&typeof saved==='object')S.settings={...S.settings,...saved}}catch(e){}
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const names=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];const fmt=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long'});const monthFmt=new Intl.DateTimeFormat('ru-RU',{month:'long'});const base=new Date();base.setHours(12,0,0,0);base.setDate(base.getDate()-(base.getDay()+6)%7);function dateOf(i){const d=new Date(R.monday);d.setDate(d.getDate()+S.week*7+i);return d}function lessonsFor(i){if(R.mode==='api'||R.mode==='cached'){const ymd=localDate(dateOf(i));return R.lessons.filter(l=>l.date===ymd).filter(l=>{const chosen=S.settings.streams?.[l.name];return !chosen||chosen==='all'||l.sub==='all'||l.sub===chosen||String(l.sub).split(',').some(x=>x.trim()===chosen)})}return []}function persist(){try{localStorage.setItem('para_editorial_v02',JSON.stringify(S.settings))}catch(e){}}
+function scheduleEmptyState(){
+ const groupId=String(S.settings.groupId||'');
+ const url=/^[0-9]{1,12}$/.test(groupId)?'https://ruz.narfu.ru/?group='+encodeURIComponent(groupId)+'&timetable=':'https://ruz.narfu.ru/';
+ const official='<a href="'+url+'" target="_blank" rel="noopener noreferrer">Посмотреть официальное расписание РУЗ ↗</a>';
+ if(R.loading)return '<div class="empty" role="status">Загружаем расписание…</div>';
+ if(R.mode==='demo')return '<div class="empty">Расписание группы '+esc(S.settings.group)+' ещё не загружено в PARA.<div class="small">'+official+'</div></div>';
+ const day=localDate(dateOf(S.selected));
+ const covered=Array.isArray(R.periods)&&R.periods.some(p=>p&&typeof p.start==='string'&&typeof p.end==='string'&&p.start<=day&&day<=p.end);
+ if(!covered)return '<div class="empty">На выбранную неделю пока нет проверенных данных.<div class="small">'+official+'</div></div>';
+ return '<div class="empty">Пар нет</div>';
+}
 function schedule(){
  const d=dateOf(S.selected),a=dateOf(0),b=dateOf(6),list=lessonsFor(S.selected);
  $('studyline').textContent=S.settings.group;
@@ -276,7 +287,7 @@ function schedule(){
    const room=l.room&&l.room!=='не указана'?'<span class="metadata">Ауд. '+esc(l.room)+'</span>':'';
    const detail=expanded?[l.type,l.teacher,l.building,l.sub==='all'?'':l.sub].filter(Boolean).map(x=>'<span>'+esc(x)+'</span>').join('<br>'):'';
    return '<button type="button" class="lesson" data-lesson="'+esc(l.id)+'" aria-expanded="'+expanded+'"><span><div class="time">'+esc(l.start)+'</div><div class="end">'+esc(l.end)+'</div></span><span><span class="subject">'+esc(l.name)+'</span>'+room+(expanded?'<span class="extra">'+detail+'</span>':'')+'</span><span class="chev" aria-hidden="true">'+(expanded?'⌃':'⌄')+'</span></button>';
- }).join(''):(R.mode==='demo'?`<div class="empty">Расписание группы ${esc(S.settings.group)} пока не загружено</div>`:'<div class="empty">Пар нет</div>');
+ }).join(''):scheduleEmptyState();
  document.querySelectorAll('[data-day]').forEach(e=>e.onclick=()=>{S.selected=Number(e.dataset.day);S.expanded=null;schedule()});
  document.querySelectorAll('[data-lesson]').forEach(e=>e.onclick=()=>{S.expanded=S.expanded===e.dataset.lesson?null:e.dataset.lesson;schedule()});
 }
@@ -454,7 +465,7 @@ function renderCourseStreams(){
  });
 }
 
-const R={mode:'demo',lessons:[],groupSourceId:null,lastSuccess:null,sourceStatus:'unknown',monday:(()=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d})()};
+const R={mode:'demo',lessons:[],periods:[],loading:false,groupSourceId:null,lastSuccess:null,sourceStatus:'unknown',monday:(()=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d})()};
 function localDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function escapeMessage(v){return esc(v)}
 function mapLesson(l,i){
@@ -473,7 +484,7 @@ async function fetchSchedule(){
  const selectedInstitution=String(S.settings.institutionId||'');
  const keyFor=id=>'para_verified_'+String(id);
  const clear=()=>{
-   R.lessons=[];R.mode='demo';R.groupSourceId=null;
+   R.lessons=[];R.periods=[];R.mode='demo';R.groupSourceId=null;
    R.lastSuccess=null;R.sourceStatus='unavailable';
  };
  function cachedFor(id){
@@ -481,7 +492,7 @@ async function fetchSchedule(){
      const saved=JSON.parse(localStorage.getItem(keyFor(id))||'null');
      // Legacy untagged caches may have been written during a group-switch race.
      if(saved&&String(saved.groupId)===String(id)&&Array.isArray(saved.lessons)&&saved.lessons.length){
-       R.lessons=saved.lessons;R.mode='cached';R.groupSourceId=id;
+       R.lessons=saved.lessons;R.periods=Array.isArray(saved.periods)?saved.periods:[];R.mode='cached';R.groupSourceId=id;
        R.lastSuccess=saved.lastSuccess;R.sourceStatus='unavailable';
        return true;
      }
@@ -490,12 +501,13 @@ async function fetchSchedule(){
  }
  function finish(){
    if(!current())return;
+   R.loading=false;
    if(R.mode!=='demo'){
      S.week=0;S.selected=(new Date().getDay()+6)%7;
    }
    schedule();renderCourseStreams();
  }
- clear();schedule();
+ clear();R.loading=true;schedule();
  try{
    await ensureCatalog();
    if(!current())return;
@@ -518,11 +530,11 @@ async function fetchSchedule(){
       &&data.cached===true&&Array.isArray(data.periods)){
      const lessons=data.periods.flatMap(p=>Array.isArray(p.lessons)?p.lessons:[]);
      if(lessons.length){
-       R.lessons=lessons.map(mapLesson);
+       R.lessons=lessons.map(mapLesson);R.periods=data.periods.map(p=>({start:p.start,end:p.end}));
        R.mode='api';R.groupSourceId=gid;
        R.sourceStatus=data.source_status||'cached';R.lastSuccess=data.last_success;
        try{localStorage.setItem(keyFor(gid),JSON.stringify({
-         groupId:gid,lessons:R.lessons,lastSuccess:R.lastSuccess,sourceStatus:R.sourceStatus
+         groupId:gid,lessons:R.lessons,periods:R.periods,lastSuccess:R.lastSuccess,sourceStatus:R.sourceStatus
        }))}catch(e){}
        finish();return;
      }
