@@ -4,8 +4,8 @@
 const box=document.createElement('div');
 box.className='para-onboard';box.id='para-onboard';box.hidden=true;
 box.innerHTML=`<div class="ob-wrap"><header class="ob-top"><strong class="ob-logo">para.</strong><span class="ob-count" id="obCounter">01 / 02</span><button type="button" class="ob-cancel" id="obCancel" hidden aria-label="Закрыть выбор группы">×</button></header><div class="ob-main">
-<section id="obChoose"><h1>Твои пары.<br>Без лишнего.</h1><p class="ob-intro">Один раз выбери группу — дальше сразу открываем твоё расписание.</p>
-<div class="ob-field"><label class="ob-label" for="obUniversity">Университет</label><select class="ob-select" id="obUniversity"><option value="safu">САФУ — Северный (Арктический) федеральный университет</option></select></div>
+<section id="obChoose"><h1>Твои пары.<br>Без лишнего.</h1><p class="ob-intro">Один раз выбери группу и потоки. Потом PARA сразу открывает твои пары.</p>
+<div class="ob-field"><label class="ob-label" for="obUniversity">Университет</label><select class="ob-select" id="obUniversity"><option value="safu">САФУ</option></select></div>
 <div class="ob-field"><label class="ob-label" for="obSchool">Высшая школа / институт</label><select class="ob-select" id="obSchool"><option value="">Все подразделения САФУ</option></select></div>
 <div class="ob-field"><label class="ob-label" for="obQuery">Номер группы</label><input class="ob-input" id="obQuery" type="search" autocomplete="off" spellcheck="false" placeholder="Например, 171605 или 1.5.15"><p class="ob-muted" id="obCount">Загружаем каталог…</p></div>
 <div class="ob-results" id="obResults"></div><p class="ob-note" id="obHint" role="status"></p></section>
@@ -29,8 +29,9 @@ function listGroups(){
   (!q||(String(g.number)+' '+String(g.program||'')).toLocaleLowerCase('ru').includes(q)));
  const relevance=g=>!q?1:String(g.number).toLowerCase()===q?0:String(g.number).toLowerCase().startsWith(q)?1:2;
  items.sort((a,b)=>relevance(a)-relevance(b)||String(a.number).localeCompare(String(b.number),'ru',{numeric:true}));
- e('obCount').textContent=groupData.length?`${items.length} из ${groupData.length} групп в каталоге.${items.length>20?' Уточни номер в поиске.':''}`:'Каталог временно недоступен.';
- e('obResults').innerHTML=items.slice(0,20).map(g=>`<button type="button" class="ob-row" data-ob-id="${safe(g.id)}" aria-pressed="${Boolean(group&&String(group.id)===String(g.id))}"><span><span class="ob-number">${safe(g.number)}</span><span class="ob-program">${safe(g.program||g.institution||'САФУ')}</span></span><span class="ob-available">${PARA_SCHEDULE_IDS.has(String(g.id))?'Есть расписание':'Проверяем'}</span></button>`).join('')||(groupData.length?'<p class="ob-note">Ничего не найдено. Проверь номер или выбери все подразделения.</p>':'');
+ const active=Boolean(q||school);
+ e('obCount').textContent=!groupData.length?'Каталог временно недоступен.':(!active?`${groupData.length} групп САФУ. Введи номер, чтобы найти свою.`:`${items.length} из ${groupData.length} групп найдено.${items.length>12?' Уточни номер в поиске.':''}`);
+ e('obResults').innerHTML=(active?items.slice(0,12):[]).map(g=>`<button type="button" class="ob-row" data-ob-id="${safe(g.id)}" aria-pressed="${Boolean(group&&String(group.id)===String(g.id))}"><span><span class="ob-number">${safe(g.number)}</span><span class="ob-program">${safe(g.program||g.institution||'САФУ')}</span></span><span class="ob-available">${PARA_SCHEDULE_IDS.has(String(g.id))?'Есть расписание':'Пока нет данных'}</span></button>`).join('')||(groupData.length?'<p class="ob-note">Ничего не найдено. Проверь номер или выбери все подразделения.</p>':'');
  for(const button of e('obResults').querySelectorAll('[data-ob-id]')){
    button.addEventListener('click',()=>{
      group=groupData.find(g=>String(g.id)===button.dataset.obId)||null;
@@ -95,7 +96,11 @@ async function finish(){
  const oldId=String(S.settings.groupId||''),newId=String(group.id);
  S.settings.group=String(group.number);
  S.settings.groupId=newId;S.settings.institutionId=String(group.institution_id);
- if(oldId!==newId)S.settings.streams={};
+ if(oldId!==newId){
+  S.settings.streams={};
+  // Never render the previous group's classes while the new schedule loads.
+  R.mode='demo';R.lessons=[];R.groupSourceId=null;R.lastSuccess=null;R.sourceStatus='unknown';
+ }
  for(const sel of e('obStreams').querySelectorAll('[data-course]'))S.settings.streams[sel.dataset.course]=sel.value;
  try{
    localStorage.setItem('para_editorial_v02',JSON.stringify(S.settings));
