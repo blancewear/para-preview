@@ -8,50 +8,49 @@ var el=function(id){return document.getElementById(id)};
 var esc2=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var filled=function(map,choices){return choices.every(function(c){return !!map[c.name]})};
 function card(value,label,desc,id,active){
- return '<button type="button" class="p2-item'+(active?' is-selected':'')+'" data-'+id+'="'+esc2(value)+'"><span class="p2-item-body"><span class="p2-item-title">'+esc2(label)+'</span>'+(desc?'<span class="p2-item-desc">'+esc2(desc)+'</span>':'')+'</span><span class="p2-item-arrow">'+(active?'✓':'↗')+'</span></button>';
+ return '<button type="button" class="p2-item'+(active?' is-selected':'')+'" data-'+id+'="'+esc2(value)+'"><span class="p2-item-body"><span class="p2-item-title">'+esc2(label)+'</span>'+(desc?'<span class="p2-item-desc">'+esc2(desc)+'</span>':'')+'</span>'+(active?'<span class="p2-item-arrow">✓</span>':'')+'</button>';
 }
 function button(label,disabled){
- return '<button type="button" class="p2-primary" id="p2Next" '+(disabled?'disabled':'')+'><span>'+label+'</span><span aria-hidden="true">↗</span></button>';
+ return '<button type="button" class="p2-primary" id="p2Next" '+(disabled?'disabled':'')+'>'+label+'</button>';
 }
 function render(title,kicker,body,footer,back){
- var nr=P.step+1;
  frame.className='p2-frame';
- frame.innerHTML='<div class="p2-top"><div class="p2-top-left">'+(back?'<button type="button" id="p2Back" class="p2-back" aria-label="Назад">←</button>':'<span class="p2-mini-logo">para.</span>')+'</div><span class="p2-count">'+String(nr).padStart(2,'0')+' / 06</span></div>'+
- '<div class="p2-body p2-enter"><div><div class="p2-kicker">'+kicker+'</div><h1 class="p2-title">'+title+'</h1></div><div class="p2-body-inner">'+body+'</div></div>'+
+ frame.innerHTML='<div class="p2-top"><div class="p2-top-left">'+(back?'<button type="button" id="p2Back" class="p2-back" aria-label="Назад">←</button>':'<span class="p2-mini-logo">para.</span>')+'</div></div>'+
+ '<div class="p2-body p2-enter"><div class="p2-heading"><h1 class="p2-title">'+title+'</h1></div><div class="p2-body-inner">'+body+'</div></div>'+
  '<div class="p2-bottom">'+(footer||'')+'</div>';
  if(back)el('p2Back').onclick=function(){go(P.step-1)};
 }
 function go(step){
  P.step=Math.max(0,Math.min(5,step));
- P.screenSeq++;P.searchSeq++;
+ P.screenSeq++;P.searchSeq++;if(frame)frame.scrollTop=0;
  if(P.step===0){
-  render('Где ты<br>учишься?','ТВОЯ УЧЁБА',card('safu','САФУ','Северный (Арктический) федеральный университет','uni',false),'',false);
+  render('Где учишься?','',card('safu','САФУ','','uni',false),'',false);
   frame.querySelector('[data-uni]').onclick=function(){go(1)};
  }
  if(P.step===1){
-  render('Выбери своё<br>подразделение.','САФУ / 02','<div id="p2Schools" class="p2-scroll-list">'+(P.schools.length?schoolCards():'<p class="p2-note">Загружаем подразделения…</p>')+'</div>','',true);
+  render('Высшая школа','','<div id="p2Schools" class="p2-scroll-list">'+(P.schools.length?schoolCards():'<p class="p2-note">Загружаем подразделения…</p>')+'</div>','',true);
   if(P.schools.length)bindSchools();else loadSchools();
  }
  if(P.step===2){
   var cells=[1,2,3,4,5,6].map(function(n){return '<button type="button" data-course="'+n+'" class="p2-course '+(P.course===n?'active':'')+'">'+String(n).padStart(2,'0')+'</button>'}).join('');
-  render('На каком<br>ты курсе?','САФУ / '+esc2(P.school&&P.school.name||''),'<div class="p2-courses">'+cells+'</div><p class="p2-note">Курс сохраняется в профиле. Каталог РУЗ не содержит точной привязки групп к курсу.</p>',button('Продолжить',!P.course),true);
+  render('Курс','', '<div class="p2-courses">'+cells+'</div>',button('Продолжить',!P.course),true);
   frame.querySelectorAll('[data-course]').forEach(function(b){b.onclick=function(){P.course=Number(b.dataset.course);frame.querySelectorAll('[data-course]').forEach(function(x){x.classList.toggle('active',x===b)});el('p2Next').disabled=false}});
   el('p2Next').onclick=function(){go(3)};
  }
  if(P.step===3){
-  render('Твоя<br>группа.','САФУ / ГРУППА','<label class="p2-label" for="p2Query">Номер группы</label><input class="p2-input" id="p2Query" autocomplete="off" spellcheck="false" placeholder="Например, 171605" value="'+esc2(P.query)+'"><p class="p2-note" id="p2Message">Выбери из списка или введи точный номер.</p><div class="p2-scroll-list p2-group-list" id="p2Matches"></div>',button('Продолжить',!P.group),true);
+  render('Группа','', '<input class="p2-input" id="p2Query" aria-label="Номер группы" autocomplete="off" spellcheck="false" placeholder="Номер группы" value="'+esc2(P.query)+'"><p class="p2-note" id="p2Message" role="status" hidden></p><div class="p2-scroll-list p2-group-list" id="p2Matches"></div>',button('Продолжить',!P.group),true);
   el('p2Query').oninput=function(){P.query=this.value.trim();P.group=null;P.selected={};P.languageCategory=null;el('p2Next').disabled=true;clearTimeout(P.searchTimer);P.searchTimer=setTimeout(searchGroups,180)};
   el('p2Next').onclick=function(){go(4)};
   searchGroups();
  }
  if(P.step===4){
-  render('Выбери свою<br>подгруппу.','ГРУППА '+esc2(P.group&&P.group.number||''),'<p class="p2-intro">Подгруппы могут отличаться по дисциплинам.</p><div id="p2Subgroups"><p class="p2-note">Читаем расписание выбранной группы…</p></div>',button('Продолжить',true)+'<button type="button" id="p2Skip" class="p2-skip">Выберу позже</button>',true);
+  render('Подгруппы','', '<div id="p2Subgroups"><p class="p2-note">Загружаем…</p></div>',button('Продолжить',true)+'<button type="button" id="p2Skip" class="p2-skip">Пропустить</button>',true);
   el('p2Next').onclick=function(){go(5)};
   el('p2Skip').onclick=function(){go(5)};
   loadLessons();
  }
  if(P.step===5){
-  render('Иностранный<br>язык.','ГРУППА '+esc2(P.group&&P.group.number||''),'<p class="p2-intro">Выбери свой языковой поток. Названия соответствуют расписанию РУЗ.</p><div id="p2Languages"></div>',button('Открыть расписание',false)+'<button type="button" class="p2-skip" id="p2SkipLanguage">Выберу позже</button>',true);
+  render('Иностранный язык','', '<div id="p2Languages"></div>',button('Открыть расписание',false)+'<button type="button" class="p2-skip" id="p2SkipLanguage">Пропустить</button>',true);
   drawLanguages();
   el('p2Next').onclick=finish;
   el('p2SkipLanguage').onclick=finish;
@@ -74,7 +73,7 @@ async function loadSchools(){
 async function searchGroups(){
  if(P.step!==3||!P.school)return;
  var epoch=++P.searchSeq,host=el('p2Matches'),message=el('p2Message'),q=P.query;
- message.textContent='Ищем в каталоге…';
+ message.hidden=true;
  try{
   var groups=await queryGroups(q,String(P.school.id));
   if(epoch!==P.searchSeq||P.step!==3)return;
@@ -88,8 +87,8 @@ async function searchGroups(){
    if(oldGroup!==String(P.group.id)){P.selected={};P.languageCategory=null}
    P.query=P.group.number;el('p2Query').value=P.query;el('p2Next').disabled=false;searchGroups();
   }});
-  message.textContent=!groups.length?'Ничего не найдено. Проверь номер или подразделение.':q?'Найдено: '+groups.length+'. Выбери свою группу.':'Введи номер для поиска. Сейчас показаны первые группы.';
- }catch(e){if(epoch!==P.searchSeq||P.step!==3)return;message.textContent='Каталог временно недоступен. Повтори поиск.'}
+  message.hidden=groups.length>0;message.textContent='Группа не найдена';
+ }catch(e){if(epoch!==P.searchSeq||P.step!==3)return;message.hidden=false;message.textContent='Не удалось загрузить группы'}
 }
 function optionsFromLessons(lessons,groupNumber){
  var subs=new Map(),langs=new Map();
@@ -138,7 +137,7 @@ function choiceSections(choices,prefix){
  return choices.map(function(c,i){
   return '<section class="p2-choice-section"><div class="p2-choice-name">'+esc2(c.name)+'</div><div class="p2-choice-options">'+c.options.map(function(o){
     var value=P.selected[c.name]===o.value;
-    return '<button type="button" class="p2-pill '+(value?'selected':'')+'" data-'+prefix+'="'+esc2(i)+'" data-value="'+esc2(o.value)+'" aria-pressed="'+String(value)+'"><span>'+esc2(o.value)+'</span>'+(o.detail?'<small>'+esc2(o.detail)+'</small>':'')+'</button>';
+    return '<button type="button" class="p2-pill '+(value?'selected':'')+'" data-'+prefix+'="'+esc2(i)+'" data-value="'+esc2(o.value)+'" aria-pressed="'+String(value)+'"><span>'+esc2(o.value)+'</span>'++'</button>';
   }).join('')+'</div></section>';
  }).join('');
 }
@@ -152,7 +151,7 @@ function bindChoices(type,choices,draw){
 function drawSubgroups(){
  if(P.step!==4)return;
  var host=el('p2Subgroups');if(!host)return;
- if(!P.subChoices.length)host.innerHTML='<p class="p2-note">В загруженном расписании отдельные подгруппы не найдены. Можно продолжить без выбора.</p>';
+ if(!P.subChoices.length)host.innerHTML='<p class="p2-note">Подгруппы не найдены</p>';
  else host.innerHTML=choiceSections(P.subChoices,'sub');
  bindChoices('sub',P.subChoices,drawSubgroups);
  el('p2Next').disabled=!filled(P.selected,P.subChoices);
@@ -161,7 +160,7 @@ function drawLanguages(){
  if(P.step!==5)return;
  var host=el('p2Languages');
  if(!P.langChoices.length){
-   host.innerHTML='<p class="p2-note">Языковые потоки пока не указаны в загруженном расписании. Ты сможешь выбрать их позже в профиле.</p>';
+   host.innerHTML='<p class="p2-note">Потоки не найдены</p>';
  }else{
    var categories=[],categoryFor=function(value){
      return /немецк|deutsch/i.test(value)?'Немецкий':/английск|english/i.test(value)?'Английский':/француз|fran[cç]ais/i.test(value)?'Французский':'Другие потоки';
@@ -174,10 +173,10 @@ function drawLanguages(){
      if(!filtered.length)return '';
      return '<section class="p2-choice-section"><div class="p2-choice-name">'+esc2(c.name)+'</div><div class="p2-choice-options">'+filtered.map(function(o){
        var selected=P.selected[c.name]===o.value;
-       return '<button type="button" data-lang="'+i+'" data-value="'+esc2(o.value)+'" aria-pressed="'+selected+'" class="p2-pill '+(selected?'selected':'')+'"><span>'+esc2(o.value)+'</span>'+(o.detail?'<small>'+esc2(o.detail)+'</small>':'')+'</button>';
+       return '<button type="button" data-lang="'+i+'" data-value="'+esc2(o.value)+'" aria-pressed="'+selected+'" class="p2-pill '+(selected?'selected':'')+'"><span>'+esc2(o.value)+'</span>'++'</button>';
      }).join('')+'</div></section>';
    }).join('');
-   host.innerHTML=tabs+sections+'<p class="p2-note">Названия потоков сохранены так, как они указаны в РУЗ. Для части потоков язык в источнике не обозначен.</p>';
+   host.innerHTML=tabs+sections;
    host.querySelectorAll('[data-langcat]').forEach(function(b){b.onclick=function(){P.languageCategory=b.dataset.langcat;drawLanguages()}});
    bindChoices('lang',P.langChoices,drawLanguages);
  }
