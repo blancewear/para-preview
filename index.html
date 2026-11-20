@@ -221,7 +221,7 @@ window.fetch = async function(input,options) {
     <div id="profileGroupNumber" class="profile-number">171605</div>
     <p class="p4-intro">Аккаунт не требуется</p>
   </div>
-  <button class="clean-row p4-quick" id="editStudy" type="button"><span>Изменить учебные данные</span><span class="action-symbol" aria-hidden="true">↗</span></button>
+  <button class="clean-row p4-quick" id="editStudy" type="button"><span>Сменить учебную группу</span><span class="action-symbol" aria-hidden="true">↗</span></button>
   <details class="clean-details p4-details" id="studyDetails">
     <summary>Учёба</summary>
     <div class="details-inner">
@@ -340,11 +340,7 @@ $('saveStudy').onclick=async()=>{
 ['minutes','scope'].forEach(id=>$(id).onchange=()=>{S.settings[id]=$(id).value;persist()});
 function editStudy(){if(typeof window.paraOpenOnboarding==='function')window.paraOpenOnboarding();else modal('Не удалось открыть выбор группы')}
 $('quickGroup').onclick=editStudy;
-$('editStudy').onclick=()=>{
- const details=$('studyDetails');
- details.open=true;
- details.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
-};
+$('editStudy').onclick=editStudy;
 $('saveVK').onclick=()=>{
  const vk=$('vkInput').value.trim();
  if(vk&&!/^https:\/\/(vk\.com|m\.vk\.com|vk\.me)\/[^?#\s]+/i.test(vk)){$('savedMsg').textContent='Проверь ссылку ВКонтакте';return}
