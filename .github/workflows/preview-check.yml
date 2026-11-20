@@ -32,7 +32,7 @@ jobs:
           css = Path("onboarding-v2.css").read_text()
           js = Path("onboarding-v2.js").read_text()
           assert 'onboarding-v2.css?v=6' in html
-          assert 'onboarding-v2.js?v=11' in html
+          assert 'onboarding-v2.js?v=12' in html
           assert 'id="onboard"' in html
           assert "obBoot();" not in html
           assert "border-radius:999px" in css
@@ -40,13 +40,17 @@ jobs:
           assert "p2-count" not in js
           assert "p2-kicker" not in js
           app = Path("para-ui-v6.css").read_text()
-          assert 'para-ui-v6.css?v=6' in html
+          assert 'para-ui-v6.css?v=7' in html
           assert 'aria-current="page"' in html
           assert "e.setAttribute('aria-current','page')" in html
           assert 'aria-pressed=' in html
           assert 'monthFmt.format(b)' in html
           assert 'para-tab-in' in app
-          assert 'para-wordmark-reveal' in app
+          draw = Path('para-logo-draw.svg').read_text()
+          assert 'stroke-dasharray' in draw and 'stroke-dashoffset' in draw
+          assert 'mask="url(#ink-p)"' in draw and 'mask="url(#ink-dot)"' in draw
+          assert 'prefers-reduced-motion:reduce' in draw
+          assert 'para-wordmark-reveal' not in app
           assert 'var shouldSetup=!completed||forced' in js
           assert "root.classList.add('p2-intro-out')" in js
           assert 'translate(0.5 0.5)' in Path('para-logo.svg').read_text()
@@ -79,7 +83,7 @@ jobs:
           logo = Path("para-logo.svg").read_text()
           assert 'viewBox="0 0 796 190"' in logo
           assert html.count('class="logo para-logo"') == 3
-          assert 'class="p2-big-logo" src="./para-logo.svg?v=4"' in js
+          assert 'class="p2-big-logo" src="./para-logo-draw.svg?v=1"' in js
           assert "function drawLanguages()" in js
           assert "function drawSubgroups()" in js
           assert 'p2-pill-teacher' in js
