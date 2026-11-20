@@ -52,7 +52,7 @@ let PARA_CATALOG_COUNT=1;
 async function ensureCatalog(){
  if(PARA_CATALOG_PROMISE)return PARA_CATALOG_PROMISE;
  PARA_CATALOG_PROMISE=(async()=>{
-   for(const url of [PARA_CATALOG_URL,'./catalog.json']){
+   for(const url of ['./catalog.json',PARA_CATALOG_URL]){
      const controller=new AbortController();
      const timeout=setTimeout(()=>controller.abort(),6500);
      try{
