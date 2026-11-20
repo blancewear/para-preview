@@ -7,6 +7,7 @@ import time
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
+from bs4 import BeautifulSoup
 from urllib.parse import parse_qs, urljoin, urlsplit
 from urllib.request import Request, urlopen
 
@@ -73,24 +74,66 @@ def clean_program(label, group_number, offset):
     return value or None
 
 
+def _declared_course(link):
+    """RUZ also encodes the course on some group ancestor containers."""
+    for node in link.parents:
+        if node.name in ("html", "body"):
+            break
+        value = node.get("data-course")
+        if value is not None and re.fullmatch(r"[1-6]", str(value).strip()):
+            return int(value)
+        attr = " ".join(node.get("class", [])) + " " + str(node.get("id") or "")
+        match = re.search(r"(?<![a-z0-9])course[_-]?([1-6])(?!\d)", attr, re.I)
+        if match:
+            return int(match.group(1))
+    return None
+
+
 def groups(html, institute):
-    p = Links()
-    p.feed(html)
+    """Parse confirmed course/form information from visible official HTML."""
+    soup = BeautifulSoup(html, "html.parser")
     found = {}
-    for href, label in p.rows:
-        gid = query_id(href, 'group')
+    study_form = None
+    course = None
+    for tag in soup.find_all(True):
+        if tag.name in ("h2", "h3", "h4", "h5", "h6"):
+            text = " ".join(tag.stripped_strings).casefold()
+            if "форма обучения" in text:
+                if "очно-заоч" in text:
+                    study_form = "очно-заочная"
+                elif "заоч" in text:
+                    study_form = "заочная"
+                elif "очн" in text:
+                    study_form = "очная"
+            match = re.fullmatch(r"(?:курс\s*)?([1-6])\s*(?:-?й\s*)?курс(?:а)?", text)
+            if match:
+                course = int(match.group(1))
+        if tag.name != "a" or not tag.has_attr("href"):
+            continue
+        gid = query_id(tag["href"], "group")
+        label = tag.get_text(" ", strip=True)
         m = GROUP_RX.match(label)
         if not gid or not m:
             continue
-        number = m.group(1).rstrip('.')
+        number = m.group(1).rstrip(".")
         if not number:
             continue
-        found.setdefault(gid, {
-            'id': gid,
-            'number': number,
-            'institution_id': institute,
-            'program': clean_program(label, number, m.end()),
-        })
+        row = {
+            "id": gid, "number": number, "institution_id": institute,
+            "program": clean_program(label, number, m.end()),
+            "study_form": study_form,
+            "course": _declared_course(tag) or course,
+        }
+        old = found.get(gid)
+        if old and old["number"] != number:
+            raise ValueError("Conflicting RUZ group number for id " + gid)
+        if old is None or (old["course"] is None and row["course"] is not None):
+            found[gid] = row
+    if not found:
+        text = " ".join(soup.get_text(" ", strip=True).split())
+        if re.search(r"данные о группах отсутствуют в системе", text, re.I):
+            return []
+        raise ValueError("Missing groups in institution " + institute)
     return list(found.values())
 
 
