@@ -1,0 +1,36 @@
+name: PARA preview smoke checks
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: node --check onboarding-v2.js
+      - name: Verify HTML wiring and real stream data
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          html = Path("index.html").read_text()
+          css = Path("onboarding-v2.css").read_text()
+          js = Path("onboarding-v2.js").read_text()
+          assert 'onboarding-v2.css?v=4' in html
+          assert 'onboarding-v2.js?v=4' in html
+          assert 'id="onboard"' in html
+          assert "obBoot();" not in html
+          assert "border-radius:999px" in css
+          assert "function drawLanguages()" in js
+          assert "function drawSubgroups()" in js
+          data = json.loads(Path("data/schedules/21096.json").read_text())
+          lessons = [x for p in data["periods"] for x in p.get("lessons", [])]
+          assert any(x.get("subgroup") == "171605_01" for x in lessons)
+          assert any(x.get("stream") == "ИЯ_Немецкий_02" for x in lessons)
+          print("Preview markup, script, styles and dataset validated")
+          PY
