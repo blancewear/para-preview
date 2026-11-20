@@ -73,3 +73,18 @@ jobs:
           assert any(x.get("stream") == "ИЯ_Немецкий_02" for x in lessons)
           print("Preview markup, script, styles and dataset validated")
           PY
+
+  layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install browser test dependencies
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Validate app geometry in real Chromium
+        run: node scripts/check-mobile-layout.mjs
