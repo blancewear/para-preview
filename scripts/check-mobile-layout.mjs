@@ -97,6 +97,37 @@ try{
       const overflow=await page.evaluate(()=>document.querySelector(".content").scrollWidth>document.querySelector(".content").clientWidth+1);
       if(overflow){failed=true;console.error("Profile expanded form overflows horizontally");}
     }
+    if(width===393){
+      await page.evaluate(()=>window.paraOpenOnboarding());
+      await page.locator('#obFrame [data-uni]').click();
+      await page.locator('#obFrame [data-school="28"]').waitFor({timeout:12000});
+      await page.locator('#obFrame [data-school="28"]').click();
+      await page.locator('#obFrame [data-course="1"]').click();
+      await page.locator('#p2Next').click();
+      await page.locator('#p2Query').fill("171605");
+      await page.locator('#p2Matches [data-group]').first().waitFor({timeout:12000});
+      await page.locator('#p2Matches [data-group]').first().click();
+      await page.locator('#p2Next').click();
+      await page.locator('#p2Subgroups .p2-pill-teacher').first().waitFor({timeout:12000});
+      const subgroupTeachers=await page.locator('#p2Subgroups .p2-pill-teacher').allTextContents();
+      for(const name of ["Кузнецов С.А.","Плотников А.А.","Шутрова И.В.","Павлова М.А."]){
+        if(!subgroupTeachers.some(t=>t.includes(name))){failed=true;console.error("Missing real RUZ subgroup teacher: "+name);}
+      }
+      await page.locator('#p2Subgroups [data-sub="0"]').first().click();
+      await page.locator('#p2Subgroups [data-sub="1"]').first().click();
+      await page.locator('#p2Next').click();
+      await page.locator('#p2Languages .p2-pill-teacher').first().waitFor({timeout:12000});
+      const german=await page.locator('#p2Languages .p2-pill-teacher').allTextContents();
+      if(!german.some(t=>t.includes("Соколова М.Л."))){failed=true;console.error("Missing real German-stream teacher");}
+      await page.locator('#p2Languages [data-langcat="Другие потоки"]').click();
+      const otherTeachers=await page.locator('#p2Languages .p2-pill-teacher').allTextContents();
+      if(!otherTeachers.some(t=>t.includes("Сафроненкова Е.Л."))){failed=true;console.error("Missing RUZ teacher on other foreign-language stream");}
+      const choiceOverflow=await page.evaluate(()=>{
+        const body=document.querySelector('#onboard .p2-body');
+        return !!body && body.scrollWidth>body.clientWidth+1;
+      });
+      if(choiceOverflow){failed=true;console.error("Teacher cards overflowed onboarding width");}
+    }
     await page.close();
   }
 }finally{
