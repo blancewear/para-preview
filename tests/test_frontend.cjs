@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 
 const html = fs.readFileSync('index.html', 'utf8');
-const scripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)];
+const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
 assert.ok(scripts.length >= 2, 'Embedded preview and app scripts must exist');
 for (const [i, match] of scripts.entries()) {
   new vm.Script(match[1], {filename: 'index-inline-' + i + '.js'});
@@ -25,7 +25,7 @@ const byId = new Map(catalog.groups.map(g => [String(g.id), String(g.number)]));
 assert.ok(byId.size >= 150);
 const status = JSON.parse(fs.readFileSync('data/status.json', 'utf8'));
 const folder = 'data/schedules';
-const files = fs.readdirSync(folder).filter(n => /^\\d+\\.json$/.test(n)).sort();
+const files = fs.readdirSync(folder).filter(n => /^\d+\.json$/.test(n)).sort();
 const published = [...new Set(status.cached_ids)].map(id => String(id) + '.json').sort();
 assert.deepEqual(published, files, 'Status must match actual published files');
 assert.equal(status.groups_cached_total, files.length);
