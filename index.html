@@ -222,14 +222,14 @@ async function fetchSchedule(){
  const group=S.settings.group.trim();
  const selectedId=String(S.settings.groupId||'');
  const selectedInstitution=String(S.settings.institutionId||'');
- const key='para_verified_'+(selectedId||group);
+ const keyFor=id=>'para_verified_'+String(id);
  const clear=()=>{
    R.lessons=[];R.mode='demo';R.groupSourceId=null;
    R.lastSuccess=null;R.sourceStatus='unavailable';
  };
  function cachedFor(id){
    try{
-     const saved=JSON.parse(localStorage.getItem(key)||'null');
+     const saved=JSON.parse(localStorage.getItem(keyFor(id))||'null');
      // Legacy untagged caches may have been written during a group-switch race.
      if(saved&&String(saved.groupId)===String(id)&&Array.isArray(saved.lessons)&&saved.lessons.length){
        R.lessons=saved.lessons;R.mode='cached';R.groupSourceId=id;
@@ -272,7 +272,7 @@ async function fetchSchedule(){
        R.lessons=lessons.map(mapLesson);
        R.mode='api';R.groupSourceId=gid;
        R.sourceStatus=data.source_status||'cached';R.lastSuccess=data.last_success;
-       try{localStorage.setItem(key,JSON.stringify({
+       try{localStorage.setItem(keyFor(gid),JSON.stringify({
          groupId:gid,lessons:R.lessons,lastSuccess:R.lastSuccess,sourceStatus:R.sourceStatus
        }))}catch(e){}
        finish();return;
