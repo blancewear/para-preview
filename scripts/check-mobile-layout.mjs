@@ -38,7 +38,7 @@ try{
       height:img.getBoundingClientRect().height,
       src:img.getAttribute('src')
     }));
-    if(!logoCheck.loaded||!logoCheck.src.endsWith('para-logo.svg')||logoCheck.width>120||logoCheck.height>38){
+    if(!logoCheck.loaded||!logoCheck.src.split('?')[0].endsWith('para-logo.svg')||logoCheck.width>120||logoCheck.height>38){
       failed=true;
       console.error('Invalid approved logo asset at '+width+'px: '+JSON.stringify(logoCheck));
     }
