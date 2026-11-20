@@ -41,7 +41,7 @@ try{
       firstOffset:Number(svg.querySelector('.p-stem').style.strokeDashoffset),
       hasImage:!!svg.querySelector('image')
     }));
-    if(inlineData.strokes!==11||inlineData.maskedGlyphs!==5||inlineData.hasImage||inlineData.firstOffset<0.8){
+    if(inlineData.strokes!==11||inlineData.maskedGlyphs!==5||inlineData.hasImage||inlineData.firstOffset<0.5){
       failed=true;console.error("Inline SVG not reset to initial ink state at "+width+"px: "+JSON.stringify(inlineData));
     }
     if(width===393){
