@@ -31,6 +31,16 @@ try{
       localStorage.setItem("para_editorial_v02",JSON.stringify({group:"171605",groupId:"21096",institutionId:"28",streams:{},vk:""}));
     });
     await page.goto(origin,{waitUntil:"domcontentloaded"});
+    const splash=page.locator('#onboard .p2-big-logo');
+    await splash.waitFor({state:'visible',timeout:4500});
+    const motion=await splash.evaluate(el=>getComputedStyle(el).animationName);
+    if(!motion.includes('para-wordmark-reveal')){
+      failed=true;console.error("Brand intro not animated at "+width+"px: "+motion);
+    }
+    await page.locator('#onboard.hidden').waitFor({state:'attached',timeout:6000});
+    const shellVisible=await page.locator('.shell').isVisible();
+    if(!shellVisible){failed=true;console.error("App did not reveal after intro at "+width+"px");}
+
     await page.locator("#schedule.screen.active").waitFor({state:"visible",timeout:12000});
     const logoCheck=await page.locator('#schedule .para-logo').evaluate(img=>({
       loaded:img.complete&&img.naturalWidth>0,
@@ -98,6 +108,14 @@ try{
       if(overflow){failed=true;console.error("Profile expanded form overflows horizontally");}
     }
     if(width===393){
+      const firstRun=await browser.newPage({viewport:{width,height},deviceScaleFactor:2,hasTouch:true,isMobile:true});
+      await firstRun.goto(origin+'/?setup=1',{waitUntil:'domcontentloaded'});
+      await firstRun.locator('#onboard .p2-big-logo').waitFor({state:'visible',timeout:4500});
+      await firstRun.locator('#obFrame [data-uni]').waitFor({state:'visible',timeout:6000});
+      if(!await firstRun.locator('#onboard').isVisible()){
+        failed=true;console.error("First-run setup did not follow the brand intro");
+      }
+      await firstRun.close();
       await page.evaluate(()=>window.paraOpenOnboarding());
       await page.locator('#obFrame [data-uni]').click();
       await page.locator('#obFrame [data-school="28"]').waitFor({timeout:12000});
