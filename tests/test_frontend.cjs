@@ -79,6 +79,23 @@ const files = fs.readdirSync(folder).filter(n => /^\d+\.json$/.test(n)).sort();
 const published = [...new Set(status.cached_ids)].map(id => String(id) + '.json').sort();
 assert.deepEqual(published, files, 'Status must match actual published files');
 assert.equal(status.groups_cached_total, files.length);
+const coveredInstitutions=new Set(status.cached_ids.map(id=>{
+  const record=catalog.groups.find(g=>String(g.id)===String(id));
+  return record&&String(record.institution_id);
+}).filter(Boolean));
+assert.ok(coveredInstitutions.size>=3,'Bounded mirror must reach several SAFU schools, not only the pilot school');
+for(const gid of ['20727','20572','21096']) {
+  const group=catalog.groups.find(g=>String(g.id)===gid);
+  assert.ok(group, gid+': missing group in full catalogue');
+  const file=path.join('data/schedules',gid+'.json');
+  assert.ok(fs.existsSync(file),gid+': representative school snapshot missing');
+  const doc=JSON.parse(fs.readFileSync(file,'utf8'));
+  assert.equal(String(doc.group_number),group.number);
+}
+assert.ok(html.includes('function scheduleEmptyState()'), 'Uncached groups must have an explicit empty state');
+assert.ok(html.includes('https://ruz.narfu.ru/?group='), 'Uncached groups must link to their official timetable');
+assert.ok(html.includes('Array.isArray(R.periods)'), 'Uncovered dates must not be mistaken for no lessons');
+
 let lessonCount = 0;
 for (const name of files) {
   const id = path.basename(name, '.json');
