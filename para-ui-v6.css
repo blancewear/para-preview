@@ -358,3 +358,34 @@ body .shell .nav svg{width:18px;height:18px;flex:0 0 auto}
  .shell :is(.nav,.day,.lesson,.group-switch,.clean-row,.p4-primary,.save-button,.p4-reset,.weekbar button),
  #onboard :is(.p2-item,.p2-pill,.p2-course,.p2-primary,.p2-language-tab,.p2-back){transition:none!important}
 }
+
+/* Course selection: the RUZ teacher belongs to the option, not a separate screen. */
+#onboard .p2-choice-options{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+  align-items:stretch;
+}
+#onboard .p2-pill{
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+  gap:6px;min-width:0;max-width:none;width:100%;min-height:78px;
+  padding:12px 13px;border-radius:16px;text-align:left;
+  overflow-wrap:break-word;
+}
+#onboard .p2-pill-label{
+  display:block;font-size:14px;font-weight:650;line-height:1.25;color:inherit;
+}
+#onboard .p2-pill-teacher{
+  display:block;font-size:12px;font-weight:500;line-height:1.4;
+  color:#53534e;overflow-wrap:anywhere;
+}
+#onboard .p2-pill.selected .p2-pill-teacher{color:#f0f0ec}
+.shell .header .para-logo,#onboard .p2-mini-logo,#onboard .p2-big-logo{
+  aspect-ratio:799 / 193;image-rendering:auto;
+}
+@media(max-width:360px){
+  #onboard .p2-choice-options{gap:8px}
+  #onboard .p2-pill{padding:11px 10px;min-height:73px}
+  #onboard .p2-pill-label{font-size:13px}
+  #onboard .p2-pill-teacher{font-size:11px}
+}
