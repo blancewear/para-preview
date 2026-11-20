@@ -275,7 +275,7 @@ function schedule(){
    const room=l.room&&l.room!=='не указана'?'<span class="metadata">Ауд. '+esc(l.room)+'</span>':'';
    const detail=expanded?[l.type,l.teacher,l.building,l.sub==='all'?'':l.sub].filter(Boolean).map(x=>'<span>'+esc(x)+'</span>').join('<br>'):'';
    return '<button type="button" class="lesson" data-lesson="'+esc(l.id)+'" aria-expanded="'+expanded+'"><span><div class="time">'+esc(l.start)+'</div><div class="end">'+esc(l.end)+'</div></span><span><span class="subject">'+esc(l.name)+'</span>'+room+(expanded?'<span class="extra">'+detail+'</span>':'')+'</span><span class="chev" aria-hidden="true">'+(expanded?'⌃':'⌄')+'</span></button>';
- }).join(''):(R.mode==='demo'?'<div class="empty">Расписание ещё не загружено</div>':'<div class="empty">Пар нет</div>');
+ }).join(''):(R.mode==='demo'?`<div class="empty">Расписание группы ${esc(S.settings.group)} пока не загружено</div>`:'<div class="empty">Пар нет</div>');
  document.querySelectorAll('[data-day]').forEach(e=>e.onclick=()=>{S.selected=Number(e.dataset.day);S.expanded=null;schedule()});
  document.querySelectorAll('[data-lesson]').forEach(e=>e.onclick=()=>{S.expanded=S.expanded===e.dataset.lesson?null:e.dataset.lesson;schedule()});
 }
