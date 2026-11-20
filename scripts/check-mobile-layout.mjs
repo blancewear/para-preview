@@ -33,9 +33,20 @@ try{
     await page.goto(origin,{waitUntil:"domcontentloaded"});
     const splash=page.locator('#onboard .p2-big-logo');
     await splash.waitFor({state:'visible',timeout:4500});
-    const motion=await splash.evaluate(el=>getComputedStyle(el).animationName);
-    if(!motion.includes('para-wordmark-reveal')){
-      failed=true;console.error("Brand intro not animated at "+width+"px: "+motion);
+    const logoSource=await splash.getAttribute('src');
+    const svgMarkup=await page.evaluate(async path=>await (await fetch(path)).text(),logoSource);
+    if(!logoSource.includes('para-logo-draw.svg')||!svgMarkup.includes('stroke-dashoffset')||!svgMarkup.includes('ink-p')||!svgMarkup.includes('ink-dot')){
+      failed=true;console.error("Stroke-drawn logo asset missing at "+width+"px");
+    }
+    if(width===393){
+      const early=await splash.screenshot();
+      await page.waitForTimeout(600);
+      const middle=await splash.screenshot();
+      await page.waitForTimeout(650);
+      const later=await splash.screenshot();
+      if(early.equals(middle)||middle.equals(later)){
+        failed=true;console.error("Logo is not actually drawing frame by frame");
+      } else console.log("OK: SVG letter-writing changes between early, middle, and late frames");
     }
     await page.locator('#onboard.hidden').waitFor({state:'attached',timeout:6000});
     const shellVisible=await page.locator('.shell').isVisible();
