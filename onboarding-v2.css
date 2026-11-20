@@ -65,3 +65,8 @@ body:has(#onboard:not(.hidden)) .shell{visibility:hidden!important;pointer-event
  #onboard .p2-pill{border-radius:15px}
 }
 @media(prefers-reduced-motion:reduce){#onboard .p2-enter,#onboard .p2-big-logo{animation:none!important}#onboard .p2-item,#onboard .p2-back,#onboard .p2-primary,#onboard .p2-course,#onboard .p2-pill,#onboard.p2-leave{transition:none!important}}
+
+#onboard .p2-language-tabs{display:flex;gap:9px;flex-wrap:wrap;margin:4px 0 25px}
+#onboard .p2-language-tab{padding:13px 19px;border:1px solid #dcdcd7;border-radius:999px;background:#fff;color:#3f3f3a;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+#onboard .p2-language-tab.active{background:#242421;border-color:#242421;color:#fff}
+#onboard .p2-language-tab:hover:not(.active){border-color:#999}
