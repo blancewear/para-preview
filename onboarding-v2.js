@@ -40,7 +40,7 @@ function go(step){
  }
  if(P.step===3){
   render('Твоя<br>группа.','САФУ / ГРУППА','<label class="p2-label" for="p2Query">Номер группы</label><input class="p2-input" id="p2Query" autocomplete="off" spellcheck="false" placeholder="Например, 171605" value="'+esc2(P.query)+'"><p class="p2-note" id="p2Message">Выбери из списка или введи точный номер.</p><div class="p2-scroll-list p2-group-list" id="p2Matches"></div>',button('Продолжить',!P.group),true);
-  el('p2Query').oninput=function(){P.query=this.value.trim();P.group=null;el('p2Next').disabled=true;clearTimeout(P.searchTimer);P.searchTimer=setTimeout(searchGroups,180)};
+  el('p2Query').oninput=function(){P.query=this.value.trim();P.group=null;P.selected={};P.languageCategory=null;el('p2Next').disabled=true;clearTimeout(P.searchTimer);P.searchTimer=setTimeout(searchGroups,180)};
   el('p2Next').onclick=function(){go(4)};
   searchGroups();
  }
