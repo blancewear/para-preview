@@ -33,12 +33,12 @@ function go(step){
  }
  if(P.step===2){
   var cells=[1,2,3,4,5,6].map(function(n){return '<button type="button" data-course="'+n+'" class="p2-course '+(P.course===n?'active':'')+'">'+String(n).padStart(2,'0')+'</button>'}).join('');
-  render('Курс','', '<div class="p2-courses">'+cells+'</div><p class="p2-note">Курс сохраним в профиле. В каталоге РУЗ курсы не указаны — далее выберешь группу по номеру.</p>',button('Продолжить',!P.course),true);
+  render('Курс','', '<div class="p2-courses">'+cells+'</div><p class="p2-note">Курс сохраним в профиле. Покажем группы выбранного курса по официальным данным РУЗ.</p>',button('Продолжить',!P.course),true);
   frame.querySelectorAll('[data-course]').forEach(function(b){b.onclick=function(){P.course=Number(b.dataset.course);frame.querySelectorAll('[data-course]').forEach(function(x){x.classList.toggle('active',x===b)});el('p2Next').disabled=false}});
   el('p2Next').onclick=function(){go(3)};
  }
  if(P.step===3){
-  render('Группа','', '<input class="p2-input" id="p2Query" aria-label="Номер группы" autocomplete="off" spellcheck="false" placeholder="Номер группы" value="'+esc2(P.query)+'"><p class="p2-note">Показаны группы '+esc2(P.school?P.school.name:'выбранного подразделения')+'. Курс '+esc2(P.course||'')+' сохранён, но не используется для неподтверждённой фильтрации.</p><p class="p2-note" id="p2Message" role="status" hidden></p><div class="p2-scroll-list p2-group-list" id="p2Matches"></div>',button('Продолжить',!P.group),true);
+  render('Группа','', '<input class="p2-input" id="p2Query" aria-label="Номер группы" autocomplete="off" spellcheck="false" placeholder="Номер группы" value="'+esc2(P.query)+'"><p class="p2-note">Показаны группы '+esc2(P.school?P.school.name:'выбранного подразделения')+'. Курс '+esc2(P.course||'')+' — показываем группы с подтверждённым курсом и группы, у которых он не указан источником.</p><p class="p2-note" id="p2Message" role="status" hidden></p><div class="p2-scroll-list p2-group-list" id="p2Matches"></div>',button('Продолжить',!P.group),true);
   el('p2Query').oninput=function(){P.query=this.value.trim();P.group=null;P.selected={};P.languageCategory=null;P.searchSeq++;el('p2Next').disabled=true;el('p2Matches').innerHTML='';el('p2Message').hidden=true;clearTimeout(P.searchTimer);P.searchTimer=setTimeout(searchGroups,180)};
   el('p2Next').onclick=function(){go(4)};
   searchGroups();
@@ -75,7 +75,7 @@ async function searchGroups(){
  var epoch=++P.searchSeq,host=el('p2Matches'),message=el('p2Message'),q=P.query;
  message.hidden=true;
  try{
-  var groups=await queryGroups(q,String(P.school.id));
+  var groups=await queryGroups(q,String(P.school.id),P.course);
   if(typeof ensureScheduleIndex==='function')await ensureScheduleIndex();
   if(epoch!==P.searchSeq||P.step!==3)return;
   groups=groups.filter(function(g){return String(g.institution_id)===String(P.school.id)});
