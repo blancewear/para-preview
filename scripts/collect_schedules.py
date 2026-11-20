@@ -150,26 +150,80 @@ def selected(catalog,cursor,limit):
     start=int(cursor)%len(groups)
     return [groups[(start+i)%len(groups)] for i in range(min(limit,len(groups)))],(start+limit)%len(groups),len(groups)
 
+
+# Failure retries are strictly bounded. One failure never blocks the main cursor.
+RETRY_COOLDOWN_SECONDS = 6 * 3600
+MAX_FAILURE_ATTEMPTS = 3  # first pass + at most two delayed retries
+
+def select_with_retries(catalog, state, limit, now):
+    """Reserve at most two slots for old failures; advance the main cursor."""
+    failures = state.get("failures", {})
+    if not isinstance(failures, dict):
+        failures = {}
+    by_id = {str(g["id"]): g for g in catalog.get("groups", [])}
+    try:
+        now_dt = datetime.fromisoformat(now.replace("Z", "+00:00"))
+    except (AttributeError, ValueError):
+        raise ValueError("Invalid synchronized timestamp")
+    if now_dt.tzinfo is None:
+        raise ValueError("Timestamp needs timezone")
+    due = []
+    for gid, item in failures.items():
+        if gid not in by_id or not isinstance(item, dict):
+            continue
+        attempts = item.get("attempts", 0)
+        when = item.get("last_failed_at", "")
+        if not isinstance(attempts, int) or not 1 <= attempts < MAX_FAILURE_ATTEMPTS:
+            continue
+        try:
+            failed_dt = datetime.fromisoformat(when.replace("Z", "+00:00"))
+            if failed_dt.tzinfo is None or (now_dt - failed_dt).total_seconds() < RETRY_COOLDOWN_SECONDS:
+                continue
+        except (AttributeError, ValueError, TypeError):
+            continue
+        due.append((when, gid))
+    due.sort()
+    slots = min(2, limit // 4, len(due))
+    fresh, next_cursor, total = selected(catalog, state.get("cursor", 0), limit - slots)
+    already = {str(g["id"]) for g in fresh}
+    retried = [by_id[gid] for _, gid in due if gid not in already][:slots]
+    return fresh + retried, next_cursor, total, {str(g["id"]) for g in retried}
+
 def collect(root,*,get=get_page,nap=time.sleep,limit=12,pause=1.6,clock=stamp):
     if not 1<=limit<=30 or not 1<=pause<=60:raise ValueError("Unsafe batch parameters")
-    state=read(root/"data"/"sync_state.json",{})
-    batch,next_cursor,total=selected(read(root/"catalog.json",{}),state.get("cursor",0),limit)
+    state=read(root/"data"/"sync_state.json",{}) or {}
+    if not isinstance(state,dict):state={}
     now=clock()
+    catalog=read(root/"catalog.json",{}) or {}
+    batch,next_cursor,total,retried_ids=select_with_retries(catalog,state,limit,now)
+    failures=state.get("failures",{})
+    if not isinstance(failures,dict):failures={}
+    valid_ids={str(g["id"]) for g in catalog["groups"]}
+    failures={gid:item for gid,item in failures.items() if gid in valid_ids and isinstance(item,dict)}
     status={"checked_at":now,"groups_total":total,"groups_attempted":len(batch),
-            "groups_ok":0,"groups_failed":0,"errors":[],"source":"https://ruz.narfu.ru/"}
+            "groups_ok":0,"groups_failed":0,"errors":[],"source":"https://ruz.narfu.ru/",
+            "retried_groups":len(retried_ids)}
     for i,group in enumerate(batch):
         if i:nap(pause)
         try:
             parsed=parse(get(group["id"]),group["number"])
             store(root/"data",group,parsed,now)
             status["groups_ok"]+=1
+            failures.pop(str(group["id"]),None)
             print("OK",group["number"],group["id"],len(parsed["lessons"]),flush=True)
         except (OSError,ValueError,RuntimeError) as exc:
             status["groups_failed"]+=1
-            status["errors"].append({"id":group["id"],"group":group["number"],
+            gid=str(group["id"])
+            previous=failures.get(gid,{}) if gid in retried_ids else {}
+            attempts=int(previous.get("attempts",0))+1
+            failures[gid]={"attempts":attempts,"last_failed_at":now}
+            status["errors"].append({"id":gid,"group":group["number"],
                                      "error":type(exc).__name__+": "+str(exc)[:120]})
             print("FAILED",group["number"],group["id"],str(exc)[:120],flush=True)
-    write(root/"data"/"sync_state.json",{"cursor":next_cursor,"last_run":now})
+    state.update({"cursor":next_cursor,"last_run":now,"failures":failures})
+    write(root/"data"/"sync_state.json",state)
+    status["retry_pending"]=sum(isinstance(v.get("attempts"),int) and v["attempts"]<MAX_FAILURE_ATTEMPTS for v in failures.values())
+    status["retry_exhausted"]=sum(isinstance(v.get("attempts"),int) and v["attempts"]>=MAX_FAILURE_ATTEMPTS for v in failures.values())
     sched=root/"data"/"schedules"
     ids=sorted(x.stem for x in sched.glob("*.json") if x.stem.isdecimal()) if sched.exists() else []
     status["cached_ids"]=ids
