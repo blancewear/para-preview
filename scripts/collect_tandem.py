@@ -321,6 +321,19 @@ def collect(root: Path, *, groups_limit=6, weeks=4, pause=2, session_factory=TAN
     # Do not claim healthy when every attempted official call failed.
     if len(report["errors"]) == len(chosen):
         raise RuntimeError("TANDEM source unavailable for all selected college groups")
+    # Static onboarding takes the published list from data/status.json;
+    # include verified TANDEM snapshots without resetting the RUZ cursor.
+    status_path = root / "data" / "status.json"
+    status = read_json(status_path, {}) or {}
+    cache_dir = root / "data" / "schedules"
+    ids = sorted(path.stem for path in cache_dir.glob("*.json") if path.stem.isdecimal())
+    status["cached_ids"] = ids
+    status["groups_cached_total"] = len(ids)
+    status["college_checked_at"] = report["checked_at"]
+    status["college_groups_selected"] = report["groups_selected"]
+    status["college_groups_with_lessons"] = report["with_lessons"]
+    status["college_groups_errors"] = len(report["errors"])
+    write_json(status_path, status)
     return report
 
 
