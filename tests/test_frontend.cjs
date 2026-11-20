@@ -131,3 +131,21 @@ for (const name of files) {
   }
 }
 console.log('PARA validated:', files.length, 'groups and', lessonCount, 'lessons. UI scripts OK.');
+
+
+// Live mirror correctness: never let the old pilot payload hide a newer RUZ
+// snapshot, and never reset the student's chosen week on background refresh.
+const mirrorFirst=html.indexOf('for(const url of sources)');
+const demoFallback=html.indexOf('if(window.PARA_SETUP_PAYLOAD&&String(window.PARA_SETUP_PAYLOAD.group_id)===requested)');
+assert.ok(mirrorFirst>=0&&demoFallback>mirrorFirst, 'Verified RUZ snapshots must win over embedded pilot data');
+assert.ok(html.includes('PARA_PUBLIC_MIRROR_BASE+requested'), 'Read freshly published files without awaiting Pages deploy');
+assert.ok(html.includes('const hadCache=!!selectedId&&cachedFor(selectedId)'), 'Show last verified group schedule immediately');
+assert.ok(html.includes('setInterval(refreshActiveSchedule,60000)'), 'Active timetable should poll at most once per minute');
+const refreshStart=html.indexOf('async function refreshActiveSchedule(){');
+const refreshEnd=html.indexOf('setInterval(refreshActiveSchedule',refreshStart);
+assert.ok(refreshStart>=0&&refreshEnd>refreshStart, 'Active schedule refresh must exist');
+const refreshBody=html.slice(refreshStart,refreshEnd);
+assert.ok(refreshBody.includes('ticket!==PARA_SCHEDULE_REQUEST'), 'Ignore obsolete refreshes after a group switch');
+assert.ok(refreshBody.includes("String(S.settings.groupId)!==gid"), 'Check the original official group ID');
+assert.ok(refreshBody.includes("document.visibilityState!=='visible'"), 'Do not poll invisible pages');
+assert.ok(!refreshBody.includes('S.week=')&&!refreshBody.includes('S.selected='), 'Background refresh must keep chosen day/week');
