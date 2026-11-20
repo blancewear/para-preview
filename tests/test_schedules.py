@@ -27,6 +27,10 @@ class Safety(unittest.TestCase):
         special=[x for x in parsed["lessons"] if x["lesson_type"]=="Дифференцированный зачет"]
         self.assertEqual(len(special),1)
         self.assertEqual(special[0]["address"],"наб. Северной Двины, д. 17")
+    def test_curator_hour_type(self):
+        html=sample().replace("Лекция История", "Кураторский час История")
+        parsed=collector.parse(html,"171605")
+        self.assertEqual(len([x for x in parsed["lessons"] if x["lesson_type"]=="Кураторский час"]),1)
     def test_dotted_group(self):
         self.assertEqual(len(collector.parse(sample("1.5.15"),"1.5.15")["lessons"]),3)
     def test_wrong_group_rejected(self):
