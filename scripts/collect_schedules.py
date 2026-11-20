@@ -77,6 +77,17 @@ def parse_lesson(segment,day):
         location=COURSE.sub(" ",location).strip()
         if "," in location:room,address=[v.strip() for v in location.split(",",1)]
         else:room=location
+        if address:
+            # RUZ may append bare 2 3 4 / 3 4 5 labels for empty pair slots.
+            tokens=address.split()
+            trailing=[]
+            for token in reversed(tokens):
+                if token.isdecimal() and 2<=int(token)<=9 and (not trailing or int(token)==trailing[-1]-1):
+                    trailing.append(int(token))
+                else:
+                    break
+            if len(trailing)>=2 and trailing[-1] in (2,3):
+                address=" ".join(tokens[:-len(trailing)])
         body=body[:x.start()].strip()
     x=STREAM.search(body)
     if x:stream=x[1].strip();body=(body[:x.start()]+body[x.end():]).strip()
