@@ -52,6 +52,13 @@ class Safety(unittest.TestCase):
                 self.assertEqual(matching[0]["lesson_type"],lesson_type)
                 self.assertEqual(matching[0]["teacher"],"Опенков М.Ю.")
 
+    def test_official_diagnostic_testing_is_not_discarded(self):
+        page=sample("161605").replace("Лекция История и философия", "Диагностическое тестирование Диагностика профессионального самоопределения студента")
+        result=collector.parse(page,"161605")
+        pairs=[row for row in result["lessons"] if row["lesson_type"]=="Диагностическое тестирование"]
+        self.assertEqual(len(pairs),1)
+        self.assertIn("Диагностика профессионального",pairs[0]["subject"])
+
     def test_unknown_lesson_rejected(self):
         with self.assertRaisesRegex(ValueError,"Unknown lesson type"):
             collector.parse(sample().replace("Лекция История","Неизвестно История"),"171605")
