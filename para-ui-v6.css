@@ -283,3 +283,26 @@ body .shell .nav svg{width:18px;height:18px;flex:0 0 auto}
 @media(prefers-reduced-motion:reduce){
   .shell .lesson,.shell .clean-row,.shell .nav{transition:none!important}
 }
+
+/* Approved, image-based PARA identity. Never synthesize the wordmark with fonts. */
+.shell .header .para-logo{
+  display:block;flex:0 0 auto;width:102px;height:auto;
+  aspect-ratio:806 / 201;object-fit:contain;object-position:left center;
+  max-width:45%;margin:0;
+}
+#onboard .p2-mini-logo{
+  display:block;width:87px;height:auto;aspect-ratio:806 / 201;object-fit:contain;
+}
+#onboard .p2-big-logo{
+  display:block;width:min(83vw,350px);max-width:100%;height:auto;
+  aspect-ratio:806 / 201;object-fit:contain;
+  animation:p2-logo .95s cubic-bezier(.18,.85,.25,1) both;
+}
+#onboard .p2-splash{align-items:center;justify-content:center}
+@media(max-width:380px){
+  .shell .header .para-logo{width:92px}
+  #onboard .p2-big-logo{width:min(82vw,300px)}
+}
+@media(prefers-reduced-motion:reduce){
+  #onboard .p2-big-logo{animation:none}
+}
