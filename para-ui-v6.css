@@ -306,3 +306,55 @@ body .shell .nav svg{width:18px;height:18px;flex:0 0 auto}
 @media(prefers-reduced-motion:reduce){
   #onboard .p2-big-logo{animation:none}
 }
+
+
+/* Interaction pass: restrained feedback, consistent focus and no layout-moving effects. */
+:root{--para-ease:cubic-bezier(.2,.7,.2,1);--para-duration:170ms}
+.shell .screen.active{animation:para-tab-in 190ms var(--para-ease) both}
+@keyframes para-tab-in{from{opacity:.68}to{opacity:1}}
+.shell :is(.nav,.day,.lesson,.group-switch,.clean-row,.p4-primary,.save-button,.p4-reset,.weekbar button),
+#onboard :is(.p2-item,.p2-pill,.p2-course,.p2-primary,.p2-language-tab,.p2-back){
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  transition:background-color var(--para-duration) var(--para-ease),
+             border-color var(--para-duration) var(--para-ease),
+             color var(--para-duration) var(--para-ease),
+             opacity var(--para-duration) var(--para-ease);
+}
+.shell :is(.nav,.day,.lesson,.group-switch,.clean-row,.p4-primary,.save-button,.p4-reset,.weekbar button):active:not(:disabled),
+#onboard :is(.p2-item,.p2-pill,.p2-course,.p2-primary,.p2-language-tab,.p2-back):active:not(:disabled){
+  opacity:.77;
+  transform:none;
+}
+.shell :is(button,input,select,summary,a):focus-visible,
+#onboard :is(button,input,select):focus-visible{
+  outline:2px solid #252521;
+  outline-offset:3px;
+}
+.shell .weekbar button:disabled{
+  opacity:.3;
+  cursor:default;
+  pointer-events:none;
+}
+.shell .nav.active svg{stroke-width:2}
+.shell .day[aria-pressed="true"] .dname{color:var(--para-ink);font-weight:650}
+.shell .clean-details[open] > summary{color:var(--para-ink)}
+.shell .p4-feature small{color:#52524e}
+.shell .p4-desc,.shell .p4-field-hint{color:#4b4b46}
+.shell .lesson[aria-expanded="true"]{border-color:#bfbfba}
+.shell .lesson .extra{animation:para-details-in 160ms ease-out both}
+@keyframes para-details-in{from{opacity:.4}to{opacity:1}}
+@media(hover:hover){
+ .shell .weekbar button:hover:not(:disabled),
+ .shell .group-switch:hover,
+ .shell .clean-row:hover,
+ .shell .lesson:hover{border-color:#babbb5}
+ .shell .nav:not(.active):hover{background:#f0f0ed;color:#34342f}
+ .shell .day:not(.active):hover{background:#efefec}
+ #onboard .p2-item:not(.is-selected):hover{border-color:#bcbcb6}
+}
+@media(prefers-reduced-motion:reduce){
+ .shell .screen.active,.shell .lesson .extra{animation:none!important}
+ .shell :is(.nav,.day,.lesson,.group-switch,.clean-row,.p4-primary,.save-button,.p4-reset,.weekbar button),
+ #onboard :is(.p2-item,.p2-pill,.p2-course,.p2-primary,.p2-language-tab,.p2-back){transition:none!important}
+}
