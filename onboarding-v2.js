@@ -33,12 +33,12 @@ function go(step){
  }
  if(P.step===2){
   var cells=[1,2,3,4,5,6].map(function(n){return '<button type="button" data-course="'+n+'" class="p2-course '+(P.course===n?'active':'')+'">'+String(n).padStart(2,'0')+'</button>'}).join('');
-  render('Курс','', '<div class="p2-courses">'+cells+'</div>',button('Продолжить',!P.course),true);
+  render('Курс','', '<div class="p2-courses">'+cells+'</div><p class="p2-note">Курс сохраним в профиле. В каталоге РУЗ курсы не указаны — далее выберешь группу по номеру.</p>',button('Продолжить',!P.course),true);
   frame.querySelectorAll('[data-course]').forEach(function(b){b.onclick=function(){P.course=Number(b.dataset.course);frame.querySelectorAll('[data-course]').forEach(function(x){x.classList.toggle('active',x===b)});el('p2Next').disabled=false}});
   el('p2Next').onclick=function(){go(3)};
  }
  if(P.step===3){
-  render('Группа','', '<input class="p2-input" id="p2Query" aria-label="Номер группы" autocomplete="off" spellcheck="false" placeholder="Номер группы" value="'+esc2(P.query)+'"><p class="p2-note" id="p2Message" role="status" hidden></p><div class="p2-scroll-list p2-group-list" id="p2Matches"></div>',button('Продолжить',!P.group),true);
+  render('Группа','', '<input class="p2-input" id="p2Query" aria-label="Номер группы" autocomplete="off" spellcheck="false" placeholder="Номер группы" value="'+esc2(P.query)+'"><p class="p2-note">Показаны группы '+esc2(P.school?P.school.name:'выбранного подразделения')+'. Курс '+esc2(P.course||'')+' сохранён, но не используется для неподтверждённой фильтрации.</p><p class="p2-note" id="p2Message" role="status" hidden></p><div class="p2-scroll-list p2-group-list" id="p2Matches"></div>',button('Продолжить',!P.group),true);
   el('p2Query').oninput=function(){P.query=this.value.trim();P.group=null;P.selected={};P.languageCategory=null;el('p2Next').disabled=true;clearTimeout(P.searchTimer);P.searchTimer=setTimeout(searchGroups,180)};
   el('p2Next').onclick=function(){go(4)};
   searchGroups();
@@ -76,12 +76,14 @@ async function searchGroups(){
  message.hidden=true;
  try{
   var groups=await queryGroups(q,String(P.school.id));
+  if(typeof ensureScheduleIndex==='function')await ensureScheduleIndex();
   if(epoch!==P.searchSeq||P.step!==3)return;
   groups=groups.filter(function(g){return String(g.institution_id)===String(P.school.id)});
   var exact=groups.filter(function(g){return String(g.number).toLowerCase()===q.toLowerCase()});
   if(q&&exact.length===1){P.group=exact[0];el('p2Next').disabled=false}
   var shown=groups.slice(0,q?20:15);
-  host.innerHTML=shown.map(function(g){return card(g.id,g.number,g.program||'','group',P.group&&String(P.group.id)===String(g.id))}).join('');
+  var ready=typeof PARA_SCHEDULE_INDEX_READY!=='undefined'&&PARA_SCHEDULE_INDEX_READY&&typeof PARA_SCHEDULE_IDS!=='undefined';
+  host.innerHTML=shown.map(function(g){var status=ready?(PARA_SCHEDULE_IDS.has(String(g.id))?'Копия расписания загружена':'Копия расписания ещё собирается'):'';return card(g.id,g.number,[g.program,status].filter(Boolean).join(' · '),'group',P.group&&String(P.group.id)===String(g.id))}).join('');
   host.querySelectorAll('[data-group]').forEach(function(b){b.onclick=function(){
    var oldGroup=P.group&&String(P.group.id);P.group=shown.find(function(g){return String(g.id)===b.dataset.group});if(!P.group)return;
    if(oldGroup!==String(P.group.id)){P.selected={};P.languageCategory=null}
