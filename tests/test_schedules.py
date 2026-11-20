@@ -159,5 +159,80 @@ class Safety(unittest.TestCase):
             self.assertEqual(collector.read(root/"data"/"sync_state.json")["failures"]["21000"]["attempts"],3)
             self.assertEqual(c["retry_exhausted"],1)
 
+
+    def test_unnumbered_slots_and_additional_ruz_activity_types(self):
+        html = sample().replace("1 08:20–09:55", "08:20–09:55")
+        html = html.replace("Лекция История", "Контрольная работа История")
+        result = collector.parse(html, "171605")
+        self.assertEqual(len(result["lessons"]), 3)
+        self.assertEqual(sum(x["start"] == "08:20:00" for x in result["lessons"]), 2)
+        self.assertEqual(result["lessons"][2]["lesson_type"], "Контрольная работа")
+
+    def test_official_empty_window_requires_same_group_and_no_lesson_slots(self):
+        html = (
+            '<html><h1>Группа 524503</h1>'
+            '<h3>понедельник, 23.11.2026</h3>'
+            '<h3>вторник, 24.11.2026</h3>'
+            '<p>Данные о расписании на эту неделю отсутствуют в системе.</p></html>'
+        )
+        self.assertTrue(collector.verified_empty_window(html, "524503"))
+        self.assertFalse(collector.verified_empty_window(html, "524504"))
+        suspicious = html.replace(
+            "</html>",
+            '<p>08:20–09:55 Неизвестный тип Тест ауд. 101</p></html>',
+        )
+        self.assertFalse(collector.verified_empty_window(suspicious, "524503"))
+        with self.assertRaises(ValueError):
+            collector.parse(suspicious, "524503")
+
+    def test_empty_window_is_counted_and_does_not_erase_saved_copy(self):
+        groups = [
+            {"id": str(22000+i), "number": str(100000+i), "institution_id": "28"}
+            for i in range(160)
+        ]
+        empty_group = groups[0]
+        empty_html = (
+            '<html><h1>Группа 100000</h1>'
+            '<h3>понедельник, 23.11.2026</h3>'
+            '<p>Данные о расписании на эту неделю отсутствуют в системе.</p></html>'
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            collector.write(root/"catalog.json", {"groups": groups})
+            old = collector.parse(sample("100000"), "100000")
+            collector.store(root/"data", empty_group, old, "2026-11-19T00:00:00Z")
+            original = (root/"data"/"schedules"/"22000.json").read_bytes()
+
+            def get(gid):
+                return empty_html if gid == "22000" else sample(groups[int(gid)-22000]["number"])
+            report = collector.collect(
+                root, get=get, nap=lambda _: None, limit=6, pause=1,
+                clock=lambda: "2026-11-20T18:00:00Z",
+            )
+            self.assertEqual(report["groups_empty"], 1)
+            self.assertEqual(report["groups_ok"], 5)
+            self.assertEqual(report["groups_failed"], 0)
+            self.assertEqual(original, (root/"data"/"schedules"/"22000.json").read_bytes())
+            self.assertNotIn("22000", collector.read(root/"data"/"sync_state.json")["failures"])
+
+    def test_full_backfill_covers_every_catalog_id_once_before_wrap(self):
+        groups = [
+            {"id": str(23000+i), "number": str(100000+i), "institution_id": str(i%13+1)}
+            for i in range(876)
+        ]
+        cursor = 0
+        seen = set()
+        for _ in range(7):
+            items, cursor, count = collector.selected({"groups":groups}, cursor, 120)
+            self.assertEqual(count, 876)
+            self.assertFalse(seen & {g["id"] for g in items})
+            seen.update(g["id"] for g in items)
+        items, cursor, count = collector.selected({"groups":groups}, cursor, 36)
+        self.assertEqual(count, 876)
+        self.assertFalse(seen & {g["id"] for g in items})
+        seen.update(g["id"] for g in items)
+        self.assertEqual(len(seen), 876)
+        self.assertEqual(cursor, 0)
+
 if __name__=="__main__":
     unittest.main()
