@@ -30,11 +30,29 @@ jobs:
           assert "p2-count" not in js
           assert "p2-kicker" not in js
           app = Path("app-shell-v3.css").read_text()
-          assert 'app-shell-v3.css?v=1' in html
+          assert 'app-shell-v3.css?v=2' in html
           assert 'id="profileGroupNumber"' in html
           assert 'id="editStudy"' in html
           assert 'id="saveVK"' in html
-          assert 'id="saveStudy"' not in html
+          assert 'id="saveStudy"' in html
+          assert 'id="fill"' in html
+          assert 'id="users"' in html
+          assert 'id="reminders"' in html
+          assert 'id="changes"' in html
+          assert 'id="rooms"' in html
+          assert 'id="minutes"' in html
+          assert 'id="scope"' in html
+          assert 'id="groupResults"' in html
+          assert 'id="institutionInput"' in html
+          assert 'id="institutionRuzLink"' in html
+          assert 'id="vkInput"' in html
+          assert 'id="saveVK"' in html
+          assert 'id="reset"' in html
+          assert 'Бот для домашних заданий ВК' in html
+          assert 'Учебные материалы группы' in html
+          assert 'Журнал старосты' in html
+          assert 'function refreshSuggestions()' in html
+          assert 'function loadInstitutions()' in html
           assert "window.paraOpenOnboarding=reopen" in js
           assert "function schedule()" in html
           assert "function profile()" in html
