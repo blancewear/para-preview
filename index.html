@@ -141,7 +141,7 @@ const host=$('groupResults');
   if(ticket!==searchTicket)return;
   if(PARA_CATALOG_READY){$('groupSearchHint').textContent=`В каталоге САФУ: ${PARA_CATALOG_COUNT} групп.`;}
   host.innerHTML=matches.slice(0,15).map(g=>`<button class="group-option" type="button" data-pick-id="${esc(g.id)}" data-pick-group="${esc(g.number)}" data-pick-institution="${esc(g.institution_id)}"><span><strong>${esc(g.number)}</strong><br><span>${esc((g.program?g.program+' · ':'')+(g.institution||'САФУ'))}</span></span><span class="availability">${String(g.id)==='21096'?'Есть сохранённое расписание':'Расписание пока недоступно'}</span></button>`).join('');
-  $('groupSearchHint').textContent=matches.length?`Найдено в каталоге САФУ: ${matches.length}. Выберите группу и нажмите «Сохранить».`:'Группа не найдена в доступном каталоге. Номер можно ввести вручную, но расписание пока не загружено.';
+  $('groupSearchHint').textContent=matches.length?`Найдено в каталоге САФУ: ${matches.length}. Выберите группу и нажмите «Сохранить».`:(PARA_CATALOG_READY?'Группа не найдена в каталоге САФУ. Номер можно ввести вручную, но расписание пока не загружено.':'Полный каталог временно недоступен. Попробуйте обновить страницу; номер можно ввести вручную.');
   host.querySelectorAll('[data-pick-group]').forEach(btn=>btn.addEventListener('click',()=>{$('groupInput').value=btn.dataset.pickGroup;$('groupInput').dataset.selectedId=btn.dataset.pickId;
     $('institutionInput').value=btn.dataset.pickInstitution;updateInstitutionLink();refreshSuggestions();$('saveStudy').focus()}));
 }
@@ -185,6 +185,13 @@ function mapLesson(l,i){
 async function fetchSchedule(){
  await ensureCatalog();
  const group=S.settings.group.trim(); const key='para_verified_'+(S.settings.groupId||group);
+ // Public preview contains verified lessons for exactly one group. Never trust
+ // cached data for another group, including data saved by older preview versions.
+ if(group!=='171605'){
+   R.mode='demo';R.lessons=[];R.lastSuccess=null;R.sourceStatus='unavailable';R.groupSourceId=null;
+   try{localStorage.removeItem(key)}catch(e){}
+   schedule();renderCourseStreams();return;
+ }
  try{
   const res=await fetch(`/api/v1/groups?q=${encodeURIComponent(group)}&limit=100`,{cache:'no-store'});
   if(!res.ok)throw Error('catalog request failed');
