@@ -137,7 +137,7 @@ function choiceSections(choices,prefix){
  return choices.map(function(c,i){
   return '<section class="p2-choice-section"><div class="p2-choice-name">'+esc2(c.name)+'</div><div class="p2-choice-options">'+c.options.map(function(o){
     var value=P.selected[c.name]===o.value;
-    return '<button type="button" class="p2-pill '+(value?'selected':'')+'" data-'+prefix+'="'+esc2(i)+'" data-value="'+esc2(o.value)+'" aria-pressed="'+String(value)+'"><span>'+esc2(o.value)+'</span>'++'</button>';
+    return '<button type="button" class="p2-pill '+(value?'selected':'')+'" data-'+prefix+'="'+esc2(i)+'" data-value="'+esc2(o.value)+'" aria-pressed="'+String(value)+'"><span>'+esc2(o.value)+'</span></button>';
   }).join('')+'</div></section>';
  }).join('');
 }
@@ -173,7 +173,7 @@ function drawLanguages(){
      if(!filtered.length)return '';
      return '<section class="p2-choice-section"><div class="p2-choice-name">'+esc2(c.name)+'</div><div class="p2-choice-options">'+filtered.map(function(o){
        var selected=P.selected[c.name]===o.value;
-       return '<button type="button" data-lang="'+i+'" data-value="'+esc2(o.value)+'" aria-pressed="'+selected+'" class="p2-pill '+(selected?'selected':'')+'"><span>'+esc2(o.value)+'</span>'++'</button>';
+       return '<button type="button" data-lang="'+i+'" data-value="'+esc2(o.value)+'" aria-pressed="'+selected+'" class="p2-pill '+(selected?'selected':'')+'"><span>'+esc2(o.value)+'</span></button>';
      }).join('')+'</div></section>';
    }).join('');
    host.innerHTML=tabs+sections;
