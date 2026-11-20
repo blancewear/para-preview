@@ -3,7 +3,7 @@
 'use strict';
 var root=document.getElementById('onboard'),frame=document.getElementById('obFrame');
 if(!root||!frame)return;
-var P={step:0,schools:[],school:null,course:null,group:null,query:'',searchSeq:0,screenSeq:0,lessons:[],subChoices:[],langChoices:[],selected:{},languageCategory:null,loading:false};
+var P={step:0,schools:[],school:null,course:null,group:null,query:'',searchSeq:0,screenSeq:0,lessons:[],subChoices:[],langChoices:[],selected:{},languageCategory:null,sourceMissing:false,loading:false};
 var el=function(id){return document.getElementById(id)};
 var esc2=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var filled=function(map,choices){return choices.every(function(c){return !!map[c.name]})};
@@ -138,10 +138,11 @@ async function loadLessons(){
   if(!res.ok)throw Error('schedule unavailable');
   var d=await res.json();
   if(epoch!==P.screenSeq||P.step!==4)return;
-  P.lessons=String(d.group_id)===String(P.group.id)&&Array.isArray(d.periods)?d.periods.flatMap(function(p){return Array.isArray(p.lessons)?p.lessons:[]}):[];
+  P.sourceMissing=!(d&&String(d.group_id)===String(P.group.id)&&d.cached===true);
+  P.lessons=!P.sourceMissing&&Array.isArray(d.periods)?d.periods.flatMap(function(p){return Array.isArray(p.lessons)?p.lessons:[]}):[];
   var choices=optionsFromLessons(P.lessons,String(P.group.number));
   P.subChoices=choices.sub;P.langChoices=choices.lang;
- }catch(e){if(epoch!==P.screenSeq||P.step!==4)return;P.lessons=[];P.subChoices=[];P.langChoices=[]}
+ }catch(e){if(epoch!==P.screenSeq||P.step!==4)return;P.lessons=[];P.subChoices=[];P.langChoices=[];P.sourceMissing=true}
  drawSubgroups();
 }
 function shortOption(value,kind){
@@ -176,7 +177,7 @@ function bindChoices(type,choices,draw){
 function drawSubgroups(){
  if(P.step!==4)return;
  var host=el('p2Subgroups');if(!host)return;
- if(!P.subChoices.length)host.innerHTML='<p class="p2-note">Подгруппы не найдены</p>';
+ if(!P.subChoices.length)host.innerHTML=P.sourceMissing?'<p class="p2-note">Расписание этой группы ещё не загружено. Подгруппы можно указать позже.</p>':'<p class="p2-note">Отдельных подгрупп нет</p>';
  else host.innerHTML=choiceSections(P.subChoices,'sub');
  bindChoices('sub',P.subChoices,drawSubgroups);
  el('p2Next').disabled=!filled(P.selected,P.subChoices);
@@ -185,7 +186,7 @@ function drawLanguages(){
  if(P.step!==5)return;
  var host=el('p2Languages');
  if(!P.langChoices.length){
-   host.innerHTML='<p class="p2-note">Потоки не найдены</p>';
+   host.innerHTML='<p class="p2-note">'+(P.sourceMissing?'Расписание ещё не загружено. Языковой поток можно выбрать позже.':'Отдельных языковых потоков нет')+'</p>';
  }else{
    var categories=[],categoryFor=function(value){
      return /немецк|deutsch/i.test(value)?'Немецкий':/английск|english/i.test(value)?'Английский':/француз|fran[cç]ais/i.test(value)?'Французский':'Другие потоки';
@@ -230,7 +231,7 @@ async function finish(){
 function reopen(){
  clearIntro();
  P.step=0;P.school=null;P.group=null;P.query='';P.subChoices=[];P.langChoices=[];
- P.selected={};P.languageCategory=null;P.screenSeq++;P.searchSeq++;
+ P.selected={};P.languageCategory=null;P.sourceMissing=false;P.screenSeq++;P.searchSeq++;
  root.classList.remove('hidden','p2-leave');
  document.documentElement.classList.add('para-first');
  go(0);
