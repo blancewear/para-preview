@@ -1,0 +1,46 @@
+/* PARA setup — editorial, compact, no overlays over timetable after setup */
+html.para-first .shell{display:none!important}
+.para-onboard[hidden]{display:none!important}
+.para-onboard{background:#fff;color:#181818;min-height:100dvh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.para-onboard *{box-sizing:border-box}
+.para-onboard .ob-wrap{max-width:510px;min-height:100dvh;margin:auto;padding:23px 25px 30px;display:flex;flex-direction:column}
+.para-onboard .ob-top{display:flex;justify-content:space-between;align-items:center}
+.para-onboard .ob-logo{font-size:28px;font-weight:760;letter-spacing:-1.8px}
+.para-onboard .ob-count{font-size:12px;color:#888}
+.para-onboard .ob-main{padding-top:min(9vh,76px);flex:1}
+.para-onboard h1{font-size:35px;font-weight:670;letter-spacing:-1.5px;line-height:1.1;margin:0 0 13px}
+.para-onboard .ob-intro{font-size:14px;color:#747474;line-height:1.55;margin:0 0 31px;max-width:365px}
+.para-onboard .ob-field{margin-bottom:23px}
+.para-onboard label.ob-label{display:block;font-size:12px;font-weight:550;color:#666;margin-bottom:8px}
+.para-onboard .ob-select,.para-onboard .ob-input{width:100%;min-height:48px;background:white;border:none;border-radius:0;border-bottom:1px solid #ddd;padding:8px 2px 8px 0;color:#171717;font-size:16px;font-family:inherit;outline:0}
+.para-onboard .ob-select:focus,.para-onboard .ob-input:focus{border-bottom-color:#111}
+.para-onboard .ob-input::placeholder{color:#aaa}
+.para-onboard .ob-muted{font-size:12px;color:#888;margin:10px 0;line-height:1.55}
+.para-onboard .ob-results{border-top:1px solid #eee;max-height:min(31vh,280px);overflow:auto;overscroll-behavior:contain}
+.para-onboard .ob-row{background:white;border:0;border-bottom:1px solid #eee;width:100%;padding:12px 0;min-height:53px;display:flex;justify-content:space-between;align-items:center;gap:14px;text-align:left;color:#181818;cursor:pointer}
+.para-onboard .ob-row:hover,.para-onboard .ob-row[aria-pressed=true]{background:#fafaf9}
+.para-onboard .ob-number{display:block;font-size:15px;font-weight:650;margin-bottom:4px}
+.para-onboard .ob-row[aria-pressed=true] .ob-number:after{content:" ✓"}
+.para-onboard .ob-program{display:block;font-size:11px;color:#777;line-height:1.45}
+.para-onboard .ob-available{font-size:10px;color:#777;white-space:nowrap}
+.para-onboard .ob-actions{position:sticky;bottom:0;background:#fff;padding:17px 0 calc(7px + env(safe-area-inset-bottom,0px));border-top:1px solid #eee;margin-top:16px}
+.para-onboard .ob-action{width:100%;min-height:49px;border:1px solid #171717;background:#171717;color:white;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+.para-onboard .ob-action:disabled{background:#e9e9e9;border-color:#e9e9e9;color:#999;cursor:default}
+.para-onboard .ob-back{border:0;background:none;color:#666;padding:13px 0;font-size:13px;cursor:pointer}
+.para-onboard .ob-choice{background:#f8f8f7;padding:17px;border-radius:4px;margin-bottom:22px}
+.para-onboard .ob-choice strong{font-size:17px}
+.para-onboard .ob-choice p{color:#888;font-size:12px;margin:6px 0 0;line-height:1.45}
+.para-onboard .ob-stream{border-bottom:1px solid #eee;padding:14px 0}
+.para-onboard .ob-stream label{display:block;font-size:13px;font-weight:550;margin-bottom:8px}
+.para-onboard .ob-stream select{width:100%;border:0;border-bottom:1px solid #ddd;padding:10px 0;font-size:14px;background:white;color:#222}
+.para-onboard .ob-note{color:#888;font-size:12px;line-height:1.6;margin-top:15px}
+@media(max-width:649px){
+.para-onboard .ob-wrap{padding:18px 20px 18px}
+.para-onboard .ob-logo{font-size:25px}
+.para-onboard .ob-main{padding-top:min(7.5vh,55px)}
+.para-onboard h1{font-size:31px}
+.para-onboard .ob-intro{font-size:13px;margin-bottom:26px}
+.para-onboard .ob-field{margin-bottom:18px}
+.para-onboard .ob-results{max-height:min(28vh,240px)}
+.para-onboard .ob-row{padding:10px 0}
+}
