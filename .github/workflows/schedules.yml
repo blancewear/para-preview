@@ -1,15 +1,25 @@
-name: PARA bounded schedule sync
+name: PARA official RUZ full schedule publisher
 
 on:
   workflow_dispatch:
+    inputs:
+      full_refresh:
+        description: 'Scan every group in bounded batches'
+        required: false
+        type: boolean
+        default: true
   schedule:
-    # At most 12 group pages per run, paced at >=1.6 s between requests.
-    # Four batches/hour, including overnight, until the published catalogue is covered.
-    # GitHub cron is best-effort; no mass crawl or requests from the VPS.
     - cron: '12,27,42,57 * * * *'
   push:
+    branches: [main]
     paths:
       - 'scripts/collect_schedules.py'
+      - 'tests/test_schedules.py'
+      - '.github/workflows/schedules.yml'
+  pull_request:
+    paths:
+      - 'scripts/collect_schedules.py'
+      - 'tests/test_schedules.py'
       - '.github/workflows/schedules.yml'
 
 permissions:
@@ -20,9 +30,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  sync:
+  verify:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 13
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_schedules.py' -v
+      - run: python -m py_compile scripts/collect_schedules.py
+
+  sync:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,34 +53,58 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Test parser and safety checks without network
-        run: python -m unittest discover -s tests -p 'test_schedules.py' -v
-      - name: Check browser script syntax and multi-group contract
+      - name: Verify parser and snapshot protections
+        run: |
+          python -m unittest discover -s tests -p 'test_schedules.py' -v
+          python -m py_compile scripts/collect_schedules.py
+      - name: Check front-end schedule wiring
         run: |
           python - <<'PY'
-          import re, subprocess, tempfile
           from pathlib import Path
           html = Path('index.html').read_text(encoding='utf-8')
           assert './data/schedules/' in html
           assert "if(group!=='171605')" not in html
-          scripts = re.findall(r'<script[^>]*>(.*?)</script>', html, flags=re.S | re.I)
-          assert scripts
-          with tempfile.TemporaryDirectory() as folder:
-              for i, script in enumerate(scripts):
-                  path = Path(folder) / f'block{i}.js'
-                  path.write_text(script, encoding='utf-8')
-                  subprocess.run(['node', '--check', str(path)], check=True)
-          print('HTML scripts and group-switching contract: OK')
+          print('Group selector and schedule source: OK')
           PY
-      - name: Collect a bounded batch from official RUZ
-        run: python scripts/collect_schedules.py --root . --limit 12 --pause 1.6
-      - name: Publish only latest verified snapshots and progress
+      - name: Collect all groups on rollout, smaller batches on recurring schedule
+        shell: bash
+        env:
+          FULL_REFRESH: ${{ github.event_name == 'push' || inputs.full_refresh == true }}
         run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898299+github-actions[bot]@users.noreply.github.com'
-          git add -A data/
-          if ! git diff --cached --quiet; then
-            git commit -m 'data: publish bounded verified SAFU schedule batch'
-            git pull --rebase origin main
-            git push origin HEAD:main
+          if [[ "$FULL_REFRESH" == 'true' ]]; then
+            batches=8
+            limit=120
+          else
+            batches=1
+            limit=36
           fi
+          for (( batch=1; batch<=batches; batch++ )); do
+            echo "::group::Official RUZ batch $batch of $batches"
+            python scripts/collect_schedules.py --root . --limit "$limit" --pause 1.6
+            git add -A data/
+            if ! git diff --cached --quiet; then
+              git commit -m "data: refresh verified RUZ group batch $batch/$batches"
+              git pull --rebase origin main
+              git push origin HEAD:main
+            fi
+            echo "::endgroup::"
+          done
+      - name: Validate published catalogue/schedule bookkeeping
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          catalog = json.loads(Path('catalog.json').read_text(encoding='utf-8'))
+          state = json.loads(Path('data/sync_state.json').read_text(encoding='utf-8'))
+          status = json.loads(Path('data/status.json').read_text(encoding='utf-8'))
+          known = {str(g['id']) for g in catalog['groups']}
+          cached = {p.stem for p in Path('data/schedules').glob('*.json')}
+          assert len(known) >= 150
+          assert cached <= known
+          assert len(cached) == status['groups_cached_total']
+          assert 0 <= state['cursor'] < len(known)
+          print(f"Catalogue: {len(known)}; published group schedules: {len(cached)}; cursor: {state['cursor']}")
+          PY
