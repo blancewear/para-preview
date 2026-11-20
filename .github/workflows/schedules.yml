@@ -30,6 +30,23 @@ jobs:
           python-version: '3.12'
       - name: Test parser and safety checks without network
         run: python -m unittest discover -s tests -p 'test_schedules.py' -v
+      - name: Check browser script syntax and multi-group contract
+        run: |
+          python - <<'PY'
+          import re, subprocess, tempfile
+          from pathlib import Path
+          html = Path('index.html').read_text(encoding='utf-8')
+          assert './data/schedules/' in html
+          assert "if(group!=='171605')" not in html
+          scripts = re.findall(r'<script[^>]*>(.*?)</script>', html, flags=re.S | re.I)
+          assert scripts
+          with tempfile.TemporaryDirectory() as folder:
+              for i, script in enumerate(scripts):
+                  path = Path(folder) / f'block{i}.js'
+                  path.write_text(script, encoding='utf-8')
+                  subprocess.run(['node', '--check', str(path)], check=True)
+          print('HTML scripts and group-switching contract: OK')
+          PY
       - name: Collect a bounded batch from official RUZ
         run: python scripts/collect_schedules.py --root . --limit 12 --pause 1.6
       - name: Publish only latest verified snapshots and progress
