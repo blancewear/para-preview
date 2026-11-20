@@ -172,8 +172,12 @@ try{
       await page.locator('#obFrame [data-school="28"]').click();
       await page.locator('#obFrame [data-course="1"]').click();
       await page.locator('#p2Next').click();
+      const courseNote=await page.locator('#obFrame .p2-note').first().innerText();
+      if(!courseNote.includes("курс")&&!courseNote.includes("Курс")){failed=true;console.error("Missing explanation of course preference vs actual RUZ group catalogue");}
       await page.locator('#p2Query').fill("171605");
       await page.locator('#p2Matches [data-group]').first().waitFor({timeout:12000});
+      const availability=await page.locator('#p2Matches [data-group]').first().innerText();
+      if(!availability.includes("Копия расписания загружена")){failed=true;console.error("Group selection does not show verified cached availability: "+availability);}
       await page.locator('#p2Matches [data-group]').first().click();
       await page.locator('#p2Next').click();
       await page.locator('#p2Subgroups .p2-pill-teacher').first().waitFor({timeout:12000});
@@ -238,6 +242,20 @@ try{
         }
         if(group.expect==="missing"&&(runtime.mode!=="demo"||!contents.includes("ещё не загружено в PARA")||official!==sourceUrl)){
           failed=true;console.error("Uncached group falsely shown as free: "+group.number+" "+contents+" "+official);
+        }
+        if(group.id==="21096"&&group.expect==="cached"){
+          await groupPage.evaluate(()=>{S.week=20;S.selected=0;schedule()});
+          const savedButton=groupPage.locator("#showSavedWeek");
+          await savedButton.waitFor({state:"visible",timeout:1500});
+          await savedButton.click();
+          const saved=await groupPage.evaluate(()=>({
+            date:localDate(dateOf(S.selected)),
+            periods:R.periods,
+            lessons:document.querySelectorAll("#lessons .lesson").length
+          }));
+          if(!saved.periods.some(p=>p.start<=saved.date&&saved.date<=p.end)||saved.lessons<1){
+            failed=true;console.error("Cannot jump to latest actual verified group week: "+JSON.stringify(saved));
+          }
         }
         await groupPage.close();
       }
