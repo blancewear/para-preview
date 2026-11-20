@@ -2,7 +2,7 @@
 import http from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 
 const root = process.cwd();
 const mime = {".html":"text/html; charset=utf-8",".js":"text/javascript; charset=utf-8",".css":"text/css; charset=utf-8",".json":"application/json",".woff2":"font/woff2",".svg":"image/svg+xml"};
@@ -19,7 +19,9 @@ const server = http.createServer(async (req,res)=>{
 await new Promise(resolve=>server.listen(0,"127.0.0.1",resolve));
 const port = server.address().port;
 const origin="http://127.0.0.1:"+port;
-const browser=await chromium.launch({headless:true});
+const engine=process.env.PARA_BROWSER==="webkit"?webkit:chromium;
+console.log("Testing PARA in "+engine.name());
+const browser=await engine.launch({headless:true});
 let failed=false;
 try{
   for(const [width,height] of [[320,568],[360,740],[375,667],[393,852],[430,932],[480,800],[768,900]]){
@@ -75,7 +77,7 @@ try{
         console.log("OK: reload "+attempt+" restarted and completed animated logo");
       }
       // Test the same code path used when Safari restores an already-open app.
-      await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));
+      await page.evaluate(()=>window.dispatchEvent(Object.assign(new Event('pageshow'),{persisted:true})));
       await splash.waitFor({state:'visible',timeout:4500});
       const restored=await splash.evaluate(svg=>Number(svg.querySelector('.p-stem').style.strokeDashoffset));
       if(restored<0.80){failed=true;console.error("bfcache pageshow did not restart ink: "+restored);}
