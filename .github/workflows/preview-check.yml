@@ -67,6 +67,16 @@ jobs:
           assert "function schedule()" in html
           assert "function profile()" in html
           assert ".clean-row" in app and ".lesson" in app
+          mobile = Path("mobile-layout-v5.css").read_text()
+          assert 'mobile-layout-v5.css?v=1' in html
+          assert 'height:100dvh' in mobile
+          assert 'overflow-y:auto' in mobile
+          assert 'position:relative' in mobile
+          assert 'padding-bottom:70px' in mobile
+          assert 'id="studyDetails">' in html
+          assert 'id="studyDetails" open' not in html
+          assert "scroller.scrollTop=0" in html
+          assert "details.open=true" in html
           assert "obBoot()" not in html
           assert "function drawLanguages()" in js
           assert "function drawSubgroups()" in js
