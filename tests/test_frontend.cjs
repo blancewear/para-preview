@@ -20,7 +20,7 @@ assert.ok(logo.includes('viewBox="0 0 796 190"') && logo.includes('fill-rule="ev
 assert.equal((html.match(/class="logo para-logo"/g)||[]).length,3,'Every app tab must use the approved logo');
 assert.ok(setup.includes('frame.innerHTML=PARA_INLINE_INK'), 'Splash must render the vector inline on every visit');
 assert.ok(setup.includes('class="p2-mini-logo" src="./para-logo.svg?v=4"'),'First-run navigation uses approved logo');
-assert.ok(html.includes('onboarding-v2.js?v=13'),'Staged onboarding script must be included');
+assert.ok(html.includes('onboarding-v2.js?v=14'),'Staged onboarding script must be included');
 assert.ok(html.includes('onboarding-v2.css?v=6'),'Staged onboarding CSS must be included');
 assert.ok(html.includes('para-ui-v6.css?v=7'),'Bounded app stylesheet must be included');
 assert.ok(html.includes('Сменить учебную группу'), 'Profile must clearly label change-group action');
