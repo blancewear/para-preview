@@ -69,6 +69,10 @@ assert.ok(html.includes('PARA_SCHEDULE_REQUEST'), 'Group switches must invalidat
 assert.ok(html.includes('if(!current())return'), 'Async responses must check the latest group request');
 assert.ok(html.includes('String(saved.groupId)===String(id)'), 'Offline cache must be tied to RUZ ID');
 assert.ok(html.includes('keyFor(gid)'), 'Cache writes must use resolved RUZ IDs');
+assert.ok(html.includes('legacyMatches.length===1'), 'Unverified or ambiguous RUZ group must never be substituted');
+assert.ok(!html.includes("if(!found && typeof PARA_STATIC_DATA==='undefined')"), 'Preview must not accept unknown group numbers');
+assert.ok(html.includes("if(!found){notice.textContent='Группа не найдена"), 'Study profile must reject unknown group numbers');
+assert.ok(html.includes('function jumpToSavedWeek()'), 'Uncovered dates need a usable saved-week action');
 assert.ok(html.includes('./data/schedules/'), 'Timetables must load by individual group ID');
 assert.ok(!html.includes('id="sourceBanner"'), 'Removed schedule banner must not return');
 assert.ok(!html.includes('195.226.92.83'), 'Never publish the VPS address in static HTML');
