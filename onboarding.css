@@ -23,7 +23,7 @@ html.para-first .shell{display:none!important}
 .para-onboard .ob-number{display:block;font-size:15px;font-weight:650;margin-bottom:4px}
 .para-onboard .ob-row[aria-pressed=true] .ob-number:after{content:" ✓"}
 .para-onboard .ob-program{display:block;font-size:11px;color:#777;line-height:1.45}
-.para-onboard .ob-available{font-size:10px;color:#777;white-space:nowrap}
+.para-onboard .ob-available{font-size:10px;color:#777;white-space:normal;max-width:112px;text-align:right;flex-shrink:0}
 .para-onboard .ob-actions{position:sticky;bottom:0;background:#fff;padding:17px 0 calc(7px + env(safe-area-inset-bottom,0px));border-top:1px solid #eee;margin-top:16px}
 .para-onboard .ob-action{width:100%;min-height:49px;border:1px solid #171717;background:#171717;color:white;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
 .para-onboard .ob-action:disabled{background:#e9e9e9;border-color:#e9e9e9;color:#999;cursor:default}
@@ -39,7 +39,7 @@ html.para-first .shell{display:none!important}
 .para-onboard .ob-wrap{padding:18px 20px 18px}
 .para-onboard .ob-logo{font-size:25px}
 .para-onboard .ob-main{padding-top:min(7.5vh,55px)}
-.para-onboard h1{font-size:31px}
+.para-onboard h1{font-size:29px}
 .para-onboard .ob-intro{font-size:13px;margin-bottom:26px}
 .para-onboard .ob-field{margin-bottom:18px}
 .para-onboard .ob-results{max-height:min(28vh,240px)}
