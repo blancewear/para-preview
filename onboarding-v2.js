@@ -115,7 +115,18 @@ function optionsFromLessons(lessons,groupNumber){
   }
  });
  function convert(map){
-  return Array.from(map.entries()).map(function(e){return {name:e[0],options:Array.from(e[1].entries()).map(function(v){return {value:v[0],detail:Array.from(v[1]).join(', ')}})}}).filter(function(c){return c.options.length>0});
+  function streamNumber(value){
+   var matches=String(value).match(/(?:_|№)[0-9]{1,3}(?=[^0-9]|$)/g);
+   var last=matches&&matches[matches.length-1];
+   return last?Number(last.replace(/[^0-9]/g,'')):Number.MAX_SAFE_INTEGER;
+  }
+  return Array.from(map.entries()).map(function(e){
+   var options=Array.from(e[1].entries()).map(function(v){
+     return {value:v[0],detail:Array.from(v[1]).sort(function(a,b){return a.localeCompare(b,'ru')}).join(', ')};
+   });
+   options.sort(function(a,b){return streamNumber(a.value)-streamNumber(b.value)||a.value.localeCompare(b.value,'ru',{numeric:true})});
+   return {name:e[0],options:options};
+  }).filter(function(c){return c.options.length>0});
  }
  return {sub:convert(subs),lang:convert(langs)};
 }
@@ -151,7 +162,7 @@ function choiceSections(choices,prefix){
  return choices.map(function(c,i){
   return '<section class="p2-choice-section"><div class="p2-choice-name">'+esc2(c.name)+'</div><div class="p2-choice-options">'+c.options.map(function(o){
     var value=P.selected[c.name]===o.value;
-    return '<button type="button" class="p2-pill '+(value?'selected':'')+'" data-'+prefix+'="'+esc2(i)+'" data-value="'+esc2(o.value)+'" aria-pressed="'+String(value)+'"><span>'+esc2(shortOption(o.value,prefix))+'</span></button>';
+    return '<button type="button" class="p2-pill '+(value?'selected':'')+'" data-'+prefix+'="'+esc2(i)+'" data-value="'+esc2(o.value)+'" aria-pressed="'+String(value)+'"><span class="p2-pill-label">'+esc2(shortOption(o.value,prefix))+'</span>'+(o.detail?'<span class="p2-pill-teacher">'+esc2(o.detail)+'</span>':'')+'</button>';
   }).join('')+'</div></section>';
  }).join('');
 }
@@ -187,7 +198,7 @@ function drawLanguages(){
      if(!filtered.length)return '';
      return '<section class="p2-choice-section"><div class="p2-choice-name">'+esc2(c.name)+'</div><div class="p2-choice-options">'+filtered.map(function(o){
        var selected=P.selected[c.name]===o.value;
-       return '<button type="button" data-lang="'+i+'" data-value="'+esc2(o.value)+'" aria-pressed="'+selected+'" class="p2-pill '+(selected?'selected':'')+'"><span>'+esc2(shortOption(o.value,'lang'))+'</span></button>';
+       return '<button type="button" data-lang="'+i+'" data-value="'+esc2(o.value)+'" aria-pressed="'+selected+'" class="p2-pill '+(selected?'selected':'')+'"><span class="p2-pill-label">'+esc2(shortOption(o.value,'lang'))+'</span>'+(o.detail?'<span class="p2-pill-teacher">'+esc2(o.detail)+'</span>':'')+'</button>';
      }).join('')+'</div></section>';
    }).join('');
    host.innerHTML=tabs+sections;
