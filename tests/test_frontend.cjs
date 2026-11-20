@@ -23,6 +23,8 @@ assert.ok(setup.includes('class="p2-mini-logo" src="./para-logo.svg?v=4"'),'Firs
 assert.ok(html.includes('onboarding-v2.js?v=13'),'Staged onboarding script must be included');
 assert.ok(html.includes('onboarding-v2.css?v=6'),'Staged onboarding CSS must be included');
 assert.ok(html.includes('para-ui-v6.css?v=7'),'Bounded app stylesheet must be included');
+assert.ok(html.includes('Сменить учебную группу'), 'Profile must clearly label change-group action');
+assert.ok(html.includes("$('editStudy').onclick=editStudy;"), 'Change-group must launch onboarding, not expand a duplicate form');
 assert.ok(html.includes('aria-current="page"'), 'Active tab must have accessibility state');
 assert.ok(html.includes("e.setAttribute('aria-current','page')"),'Tab switches must update accessibility state');
 assert.ok(html.includes('aria-pressed='),'Day selection must expose state');
