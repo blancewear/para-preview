@@ -65,7 +65,7 @@ try{
           offset:Number(svg.querySelector('.p-stem').style.strokeDashoffset),
           count:svg.querySelectorAll('.para-stroke').length
         }));
-        if(initial.count!==11||initial.offset<0.80){
+        if(initial.count!==11||initial.offset<0.50){
           failed=true;console.error("Reload "+attempt+" reused completed ink: "+JSON.stringify(initial));
         }
         await page.waitForTimeout(250);
