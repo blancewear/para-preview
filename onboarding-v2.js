@@ -216,6 +216,14 @@ async function finish(){
  if(typeof loadInstitutions==='function')loadInstitutions();
  setTimeout(function(){root.classList.remove('p2-leave');root.classList.add('hidden');tab('schedule')},250);
 }
+function reopen(){
+ P.step=0;P.school=null;P.group=null;P.query='';P.subChoices=[];P.langChoices=[];
+ P.selected={};P.languageCategory=null;P.screenSeq++;P.searchSeq++;
+ root.classList.remove('hidden','p2-leave');
+ document.documentElement.classList.add('para-first');
+ go(0);
+}
+window.paraOpenOnboarding=reopen;
 function boot(){
  var forced=new URLSearchParams(location.search).get('setup')==='1';
  var completed=false;
