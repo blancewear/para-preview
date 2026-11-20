@@ -32,7 +32,7 @@ jobs:
           css = Path("onboarding-v2.css").read_text()
           js = Path("onboarding-v2.js").read_text()
           assert 'onboarding-v2.css?v=6' in html
-          assert 'onboarding-v2.js?v=17' in html
+          assert 'onboarding-v2.js?v=18' in html
           assert 'id="onboard"' in html
           assert "obBoot();" not in html
           assert "border-radius:999px" in css
