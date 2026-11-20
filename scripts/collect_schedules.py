@@ -12,9 +12,9 @@ from urllib.request import Request, urlopen
 BASE = "https://ruz.narfu.ru/"
 MAX = 5_000_000
 DAY = re.compile(r"(?:понедельник|вторник|среда|четверг|пятница|суббота|воскресенье),?\s+(\d{1,2})\.(\d{2})\.(\d{4})",re.I)
-PAIR = re.compile(r"(?<!\d)([1-9])\s+(\d{1,2}):(\d{2})\s*[—–-]\s*(\d{1,2}):(\d{2})\s+")
-GROUP = re.compile(r"\b(?:Группа|гр\.)\s*[:№#-]?\s*([0-9А-ЯA-Z](?:[0-9А-ЯA-Z_.-]{1,38}[0-9А-ЯA-Z]))",re.I)
-TYPES = sorted(("Практические занятия (Практическая подготовка)","Вторая повторная промежуточная аттестация (комиссия)","Первая повторная промежуточная аттестация","Практика","Практическое занятие","Лабораторная работа","Лекция","Семинар","Экзамен","Зачет","Зачёт","Дифференцированный зачет","Дифференцированный зачёт","Консультация","Собрание","Кураторский час","Курсовая работа","Курсовой проект","Федеральный интернет-экзамен (ФЭПО)","Федеральный интернет-экзамен"),key=len,reverse=True)
+PAIR = re.compile(r"(?<![\d:])(?:([1-9])\s+)?(\d{1,2}):(\d{2})\s*[—–-]\s*(\d{1,2}):(\d{2})\s+")
+GROUP = re.compile(r"\b(?:Группа|гр\.)\s*[:№#-]?\s*([0-9А-ЯA-Z](?:[0-9А-ЯA-Z_./-]{1,38}[0-9А-ЯA-Z]))",re.I)
+TYPES = sorted(("Практические занятия (Практическая подготовка)","Вторая повторная промежуточная аттестация (комиссия)","Первая повторная промежуточная аттестация","Практика","Практическое занятие","Лабораторная работа","Лабораторное занятие","Лабораторные занятия","Контрольная работа","Курсовое проектирование","Практические занятия","Зачет с оценкой","Зачёт с оценкой","Объявление","Занятие","Лекция","Семинар","Экзамен","Зачет","Зачёт","Дифференцированный зачет","Дифференцированный зачёт","Консультация","Собрание","Кураторский час","Курсовая работа","Курсовой проект","Федеральный интернет-экзамен (ФЭПО)","Федеральный интернет-экзамен"),key=len,reverse=True)
 COURSE = re.compile(r"(?<!\w)(?:Ссылка\s+на\s+курс|Курс\s+лекций\s+на\s+платформе\s+Sakai\s+доступен\s+для\s+ознакомления)(?!\w)",re.I)
 STREAM = re.compile(r'\s+Поток\s+["«]([^"»]+)["»]',re.I)
 SUB = re.compile(r"\s+Подгруппа\s+(\S+)",re.I)
@@ -60,6 +60,29 @@ def get_page(gid):
         raw=res.read(MAX+1)
     if not 120<=len(raw)<=MAX:raise ValueError("Empty, truncated, oversized page")
     return raw.decode("utf-8","replace")
+
+EMPTY_NOTE = re.compile(
+    r"данные\s+о\s+расписании\s+на\s+эту\s+неделю\s+отсутствуют\s+в\s+системе"
+    r"|расписани[ея]\s+(?:нет|отсутствует|не\s+опубликовано)"
+    r"|занятий\s+нет|нет\s+занятий", re.I,
+)
+
+
+def verified_empty_window(html, expected):
+    """A positive, identity-checked source statement about its visible window.
+
+    Not evidence of semester-wide absence; never erase an existing snapshot.
+    A lesson-shaped time entry blocks this classification even if a banner exists.
+    """
+    if not 120 <= len(html) <= MAX:
+        return False
+    p = Text()
+    p.feed(html)
+    visible = " ".join(p.words)
+    ids = {x[1].upper() for x in GROUP.finditer(visible)}
+    return (ids == {expected.upper()} and bool(DAY.search(visible))
+            and not PAIR.search(visible) and bool(EMPTY_NOTE.search(visible)))
+
 
 def parse_lesson(segment,day):
     m=PAIR.match(segment)
@@ -207,7 +230,7 @@ def select_with_retries(catalog, state, limit, now):
     return fresh + retried, next_cursor, total, {str(g["id"]) for g in retried}
 
 def collect(root,*,get=get_page,nap=time.sleep,limit=12,pause=1.6,clock=stamp):
-    if not 1<=limit<=30 or not 1<=pause<=60:raise ValueError("Unsafe batch parameters")
+    if not 1<=limit<=120 or not 1<=pause<=60:raise ValueError("Unsafe batch parameters")
     state=read(root/"data"/"sync_state.json",{}) or {}
     if not isinstance(state,dict):state={}
     now=clock()
@@ -218,12 +241,18 @@ def collect(root,*,get=get_page,nap=time.sleep,limit=12,pause=1.6,clock=stamp):
     valid_ids={str(g["id"]) for g in catalog["groups"]}
     failures={gid:item for gid,item in failures.items() if gid in valid_ids and isinstance(item,dict)}
     status={"checked_at":now,"groups_total":total,"groups_attempted":len(batch),
-            "groups_ok":0,"groups_failed":0,"errors":[],"source":"https://ruz.narfu.ru/",
+            "groups_ok":0,"groups_failed":0,"groups_empty":0,"errors":[],"source":"https://ruz.narfu.ru/",
             "retried_groups":len(retried_ids)}
     for i,group in enumerate(batch):
         if i:nap(pause)
         try:
-            parsed=parse(get(group["id"]),group["number"])
+            raw=get(str(group["id"]))
+            if verified_empty_window(raw,group["number"]):
+                status["groups_empty"]+=1
+                failures.pop(str(group["id"]),None)
+                print("EMPTY",group["number"],group["id"],flush=True)
+                continue
+            parsed=parse(raw,group["number"])
             store(root/"data",group,parsed,now)
             status["groups_ok"]+=1
             failures.pop(str(group["id"]),None)
