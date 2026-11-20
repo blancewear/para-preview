@@ -1,6 +1,7 @@
 /* PARA mobile layout v5: fixed app frame, compact content, safe Safari controls */
 html,body{width:100%;height:100%;max-width:100%;overflow:hidden;overscroll-behavior:none;background:#fafaf8}
 body{margin:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .shell{
   width:100%;max-width:none;height:100vh;height:100dvh;min-height:0;
   display:flex;flex-direction:column;overflow:hidden;background:#fafaf8;
@@ -130,7 +131,7 @@ body{margin:0}
    Keep navigation in app flow and reserve space outside its scrollable content. */
 @supports (-webkit-touch-callout:none){
   @media(max-width:700px){
-    .shell{padding-bottom:70px}
+    .shell{padding-bottom:88px}
     .bottom{margin-bottom:5px}
   }
 }
@@ -150,3 +151,11 @@ body{margin:0}
 @media(prefers-reduced-motion:reduce){
   .screen{animation:none!important}
 }
+/* iOS Safari zooms the whole page when editable controls use fonts below 16px. */
+@supports (-webkit-touch-callout:none){
+ @media(max-width:700px){
+   .p4-details .field input,.p4-details .field select,
+   .details-inner input,.details-inner select{font-size:16px!important}
+ }
+}
+.clean-details{scroll-margin-top:76px}
