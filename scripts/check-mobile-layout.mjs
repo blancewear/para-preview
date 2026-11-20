@@ -162,7 +162,11 @@ try{
         failed=true;console.error("First-run setup did not follow the brand intro");
       }
       await firstRun.close();
-      await page.evaluate(()=>window.paraOpenOnboarding());
+      await page.locator('#editStudy').click();
+      await page.locator('#obFrame [data-uni]').waitFor({state:'visible',timeout:4500});
+      if(!await page.locator('#onboard').isVisible()){
+        failed=true;console.error("Change-group action did not open the step-by-step setup");
+      }
       await page.locator('#obFrame [data-uni]').click();
       await page.locator('#obFrame [data-school="28"]').waitFor({timeout:12000});
       await page.locator('#obFrame [data-school="28"]').click();
