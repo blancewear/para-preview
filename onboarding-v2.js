@@ -57,7 +57,7 @@ function go(step){
  }
 }
 function schoolCards(){return P.schools.map(function(s){return card(s.id,s.name,'','school',P.school&&String(P.school.id)===String(s.id))}).join('')}
-function bindSchools(){frame.querySelectorAll('[data-school]').forEach(function(b){b.onclick=function(){P.school=P.schools.find(function(s){return String(s.id)===b.dataset.school});P.group=null;P.query='';P.selected={};go(2)}})}
+function bindSchools(){frame.querySelectorAll('[data-school]').forEach(function(b){b.onclick=function(){var nextSchool=P.schools.find(function(s){return String(s.id)===b.dataset.school});if(!nextSchool)return;if(!P.school||String(P.school.id)!==String(nextSchool.id))P.course=null;P.school=nextSchool;P.group=null;P.query='';P.selected={};go(2)}})}
 async function loadSchools(){
  var epoch=P.screenSeq;
  try{
@@ -232,7 +232,7 @@ async function finish(){
 }
 function reopen(){
  clearIntro();
- P.step=0;P.school=null;P.group=null;P.query='';P.subChoices=[];P.langChoices=[];
+ P.step=0;P.school=null;P.course=null;P.group=null;P.query='';P.subChoices=[];P.langChoices=[];
  P.selected={};P.languageCategory=null;P.sourceMissing=false;P.screenSeq++;P.searchSeq++;
  root.classList.remove('hidden','p2-leave');
  document.documentElement.classList.add('para-first');
