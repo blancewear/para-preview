@@ -3,9 +3,10 @@ name: PARA bounded schedule sync
 on:
   workflow_dispatch:
   schedule:
-    # Up to 12 group pages per run, paced at >=1.6 s between requests.
-    # Best-effort GitHub schedule; no requests from the user's VPS.
-    - cron: '12,27,42,57 4-20 * * *'
+    # At most 12 group pages per run, paced at >=1.6 s between requests.
+    # Four batches/hour, including overnight, until the published catalogue is covered.
+    # GitHub cron is best-effort; no mass crawl or requests from the VPS.
+    - cron: '12,27,42,57 * * * *'
   push:
     paths:
       - 'scripts/collect_schedules.py'
