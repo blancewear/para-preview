@@ -21,11 +21,14 @@ jobs:
           html = Path("index.html").read_text()
           css = Path("onboarding-v2.css").read_text()
           js = Path("onboarding-v2.js").read_text()
-          assert 'onboarding-v2.css?v=4' in html
-          assert 'onboarding-v2.js?v=4' in html
+          assert 'onboarding-v2.css?v=5' in html
+          assert 'onboarding-v2.js?v=5' in html
           assert 'id="onboard"' in html
           assert "obBoot();" not in html
           assert "border-radius:999px" in css
+          assert "height:100dvh" in css
+          assert "p2-count" not in js
+          assert "p2-kicker" not in js
           assert "function drawLanguages()" in js
           assert "function drawSubgroups()" in js
           data = json.loads(Path("data/schedules/21096.json").read_text())
