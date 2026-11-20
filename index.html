@@ -353,9 +353,9 @@ $('saveStudy').onclick=async()=>{
  const matches=await queryGroups(value,institutionId);
  const exact=matches.filter(g=>g.number.toLowerCase()===value.toLowerCase());
  const chosen=exact.find(g=>String(g.id)===$('groupInput').dataset.selectedId);
- if(exact.length>1&&!chosen){notice.textContent='Найдено несколько групп — уточни высшую школу';return}
+ if(exact.length>1&&!chosen){notice.textContent='Несколько групп с таким номером — выбери нужную из списка';return}
  const found=chosen||exact[0]||null;
- if(!found && typeof PARA_STATIC_DATA==='undefined'){notice.textContent='Группа не найдена в каталоге РУЗ PARA';return}
+ if(!found){notice.textContent='Группа не найдена в каталоге РУЗ. Выбери её из списка';return}
  const nextId=found?String(found.id):'';
  const changed=String(S.settings.groupId||'')!==nextId||S.settings.group!==value;
  S.settings.group=found?found.number:value;
@@ -538,8 +538,10 @@ async function fetchSchedule(){
    if(!res.ok)throw Error('Group catalogue unavailable');
    const groups=await res.json();
    if(!current())return;
-   const match=groups.find(x=>x.number===group&&String(x.id)===selectedId)
-      ||groups.find(x=>x.number===group&&(!selectedInstitution||String(x.institution_id)===selectedInstitution));
+   const exactMatch=groups.find(x=>x.number===group&&String(x.id)===selectedId);
+   const legacyMatches=!selectedId?groups.filter(x=>x.number===group&&(!selectedInstitution||String(x.institution_id)===selectedInstitution)):[];
+   // Never silently switch to a different RUZ group if an ID is stale or ambiguous.
+   const match=exactMatch||(legacyMatches.length===1?legacyMatches[0]:null);
    if(!match){clear();finish();return}
    const gid=String(match.id);
    // Save verified group identity, never just a non-unique display number.
