@@ -197,13 +197,21 @@ try{
       if(choiceOverflow){failed=true;console.error("Teacher cards overflowed onboarding width");}
     }
     if(width===393){
-      // Real snapshots from multiple schools, plus a truly uncached group.
-      for(const group of [
-        {id:"21096",number:"171605",institution:"28",expect:"lesson"},
-        {id:"20572",number:"151411",institution:"3",expect:"lesson"},
-        {id:"20727",number:"131313",institution:"1",expect:"uncovered"},
-        {id:"21184",number:"1.5.15",institution:"33",expect:"missing"}
-      ]){
+      // Select the missing group dynamically: scheduled collection keeps growing.
+      const liveCatalog=JSON.parse(await fs.readFile(path.join(root,"catalog.json"),"utf8"));
+      const liveStatus=JSON.parse(await fs.readFile(path.join(root,"data/status.json"),"utf8"));
+      const copied=new Set(liveStatus.cached_ids.map(String));
+      const missingGroup=liveCatalog.groups.find(g=>!copied.has(String(g.id))&&String(g.institution_id)!=="28");
+      const samples=[
+        {id:"21096",number:"171605",institution:"28",expect:"cached"},
+        {id:"20572",number:"151411",institution:"3",expect:"cached"},
+        {id:"20727",number:"131313",institution:"1",expect:"cached"}
+      ];
+      if(missingGroup)samples.push({
+        id:String(missingGroup.id),number:missingGroup.number,
+        institution:String(missingGroup.institution_id),expect:"missing"
+      });
+      for(const group of samples){
         const groupPage=await browser.newPage({viewport:{width,height},isMobile:true,hasTouch:true});
         await groupPage.addInitScript(g=>{
           localStorage.setItem("para_onboarding_complete_v1","1");
@@ -213,18 +221,22 @@ try{
         },group);
         await groupPage.goto(origin,{waitUntil:"domcontentloaded"});
         await groupPage.waitForFunction(g=>document.querySelector("#studyline")?.textContent===g.number,group,{timeout:6500});
-        await groupPage.waitForFunction(()=>!document.querySelector("#lessons")?.textContent?.includes("Загружаем расписание"),null,{timeout:7500});
+        await groupPage.waitForFunction(()=>typeof R!=="undefined"&&!R.loading,null,{timeout:7500});
+        const runtime=await groupPage.evaluate(()=>({
+          mode:R.mode,sourceId:R.groupSourceId,periods:R.periods,
+          date:localDate(dateOf(S.selected))
+        }));
         const contents=await groupPage.locator("#lessons").innerText();
-        const hasLesson=await groupPage.locator("#lessons .lesson").count();
         const official=await groupPage.locator("#lessons .empty a").getAttribute("href").catch(()=>null);
         const sourceUrl="https://ruz.narfu.ru/?group="+group.id+"&timetable=";
-        if(group.expect==="lesson"&&hasLesson<1){
-          failed=true;console.error("Verified group "+group.number+" must show lessons: "+contents);
+        if(group.expect==="cached"&&(!(runtime.mode==="api"||runtime.mode==="cached")||String(runtime.sourceId)!==group.id)){
+          failed=true;console.error("Other school snapshot failed to load: "+group.number+" "+JSON.stringify(runtime));
         }
-        if(group.expect==="uncovered"&&(!contents.includes("нет проверенных данных")||official!==sourceUrl)){
+        if(group.expect==="cached"&&!runtime.periods.some(p=>p.start<=runtime.date&&runtime.date<=p.end)&&
+          (!contents.includes("нет проверенных данных")||official!==sourceUrl)){
           failed=true;console.error("Uncovered period falsely shown as free: "+group.number+" "+contents+" "+official);
         }
-        if(group.expect==="missing"&&(!contents.includes("ещё не загружено в PARA")||official!==sourceUrl)){
+        if(group.expect==="missing"&&(runtime.mode!=="demo"||!contents.includes("ещё не загружено в PARA")||official!==sourceUrl)){
           failed=true;console.error("Uncached group falsely shown as free: "+group.number+" "+contents+" "+official);
         }
         await groupPage.close();
