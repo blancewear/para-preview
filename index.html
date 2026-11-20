@@ -296,7 +296,7 @@ async function fetchSchedule(){
 /* Onboarding shares the real university catalogue and verified schedule identity. */
 const OB={step:-1,institution:'',institutionName:'',course:'',group:null,universities:[{id:'САФУ',name:'Северный (Арктический) федеральный университет'}],institutions:[],results:[],ticket:0,timer:null,epoch:0};
 const obEscape=esc;
-function obEnabled(){return !localStorage.getItem('para_onboarding_complete_v1')}
+function obEnabled(){return new URLSearchParams(location.search).get('setup')==='1'||!localStorage.getItem('para_onboarding_complete_v1')}
 function obFrame(markup){$('obFrame').innerHTML=markup}
 function obLayout(title,body,footer,back=true){
   const number=OB.step===0?'01':OB.step===1?'02':OB.step===2?'03':'04';
