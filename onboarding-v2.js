@@ -39,7 +39,7 @@ function go(step){
  }
  if(P.step===3){
   render('Группа','', '<input class="p2-input" id="p2Query" aria-label="Номер группы" autocomplete="off" spellcheck="false" placeholder="Номер группы" value="'+esc2(P.query)+'"><p class="p2-note">Показаны группы '+esc2(P.school?P.school.name:'выбранного подразделения')+'. Курс '+esc2(P.course||'')+' сохранён, но не используется для неподтверждённой фильтрации.</p><p class="p2-note" id="p2Message" role="status" hidden></p><div class="p2-scroll-list p2-group-list" id="p2Matches"></div>',button('Продолжить',!P.group),true);
-  el('p2Query').oninput=function(){P.query=this.value.trim();P.group=null;P.selected={};P.languageCategory=null;el('p2Next').disabled=true;clearTimeout(P.searchTimer);P.searchTimer=setTimeout(searchGroups,180)};
+  el('p2Query').oninput=function(){P.query=this.value.trim();P.group=null;P.selected={};P.languageCategory=null;P.searchSeq++;el('p2Next').disabled=true;el('p2Matches').innerHTML='';el('p2Message').hidden=true;clearTimeout(P.searchTimer);P.searchTimer=setTimeout(searchGroups,180)};
   el('p2Next').onclick=function(){go(4)};
   searchGroups();
  }
