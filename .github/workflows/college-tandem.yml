@@ -1,0 +1,63 @@
+name: PARA independent college TANDEM schedules
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '39 */4 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/collect_tandem.py'
+      - 'tests/test_tandem.py'
+      - '.github/workflows/college-tandem.yml'
+  pull_request:
+    paths:
+      - 'scripts/collect_tandem.py'
+      - 'tests/test_tandem.py'
+      - '.github/workflows/college-tandem.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: para-schedule-data
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_tandem.py' -v
+      - run: python -m py_compile scripts/collect_tandem.py
+
+  college:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test official-source adapter without internet
+        run: python -m unittest discover -s tests -p 'test_tandem.py' -v
+      - name: Retrieve only official college group timetables
+        run: python scripts/collect_tandem.py --root . --limit 6 --weeks 4 --pause 2
+      - name: Commit only independently verified nonempty timetables
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898299+github-actions[bot]@users.noreply.github.com'
+          git add -A data/schedules/
+          if ! git diff --cached --quiet; then
+            git commit -m 'data: refresh verified official TANDEM college timetables'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
