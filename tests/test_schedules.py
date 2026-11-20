@@ -234,5 +234,83 @@ class Safety(unittest.TestCase):
         self.assertEqual(len(seen), 876)
         self.assertEqual(cursor, 0)
 
+
+    def test_full_parallel_scan_verifies_every_group_and_preserves_empty_previous(self):
+        groups=[
+            {"id":str(23000+i), "number":str(100000+i), "institution_id":str(i%14+1)}
+            for i in range(160)
+        ]
+        group_by_id={g["id"]:g for g in groups}
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            collector.write(root/"catalog.json",{"groups":groups})
+            existing=collector.parse(sample(groups[1]["number"]),groups[1]["number"])
+            collector.store(root/"data",groups[1],existing,"2026-11-18T00:00:00+00:00")
+            original=(root/"data"/"schedules"/(groups[1]["id"]+".json")).read_bytes()
+            from threading import Lock
+            from time import sleep
+            monitor=Lock()
+            active=[0]
+            maximum=[0]
+            visited=[]
+            def get(gid):
+                with monitor:
+                    visited.append(gid)
+                    active[0]+=1
+                    maximum[0]=max(maximum[0],active[0])
+                try:
+                    sleep(0.0005)
+                    group=group_by_id[gid]
+                    if gid==groups[1]["id"]:
+                        return ('<html><h1>Группа '+group["number"]+'</h1>'
+                                '<h2>понедельник, 23.11.2026</h2>'
+                                '<p>Данные о расписании на эту неделю отсутствуют в системе.</p></html>')
+                    if gid==groups[2]["id"]:
+                        raise OSError("transient upstream disconnect")
+                    return sample(group["number"])
+                finally:
+                    with monitor:
+                        active[0]-=1
+            out=collector.collect_all(
+                root,get=get,nap=lambda _:None,workers=3,min_interval=0.5,
+                clock=lambda:"2026-11-21T00:00:00+00:00",
+            )
+            self.assertEqual((out["groups_total"],out["groups_completed"]), (160,160))
+            self.assertEqual((out["groups_ok"],out["groups_empty"],out["groups_failed"]),(158,1,1))
+            self.assertEqual(out["groups_changed"],158)
+            self.assertEqual(len(set(visited)),160)
+            self.assertEqual(len(visited),160)
+            self.assertTrue(1<=maximum[0]<=3)
+            self.assertEqual(original,(root/"data"/"schedules"/(groups[1]["id"]+".json")).read_bytes())
+            self.assertEqual(out["groups_cached_total"],159)
+            state=collector.read(root/"data"/"sync_state.json")
+            self.assertEqual(set(state["failures"]),{groups[2]["id"]})
+            self.assertEqual(state["cursor"],0)
+            self.assertEqual(out["full_refresh"],True)
+
+    def test_full_scan_rejects_total_source_outage_and_keeps_published_status(self):
+        groups=[
+            {"id":str(23000+i), "number":str(100000+i), "institution_id":str(i%14+1)}
+            for i in range(150)
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            collector.write(root/"catalog.json",{"groups":groups})
+            collector.write(root/"data"/"status.json",{"groups_cached_total":99,"checked_at":"previous"})
+            def broken(_):
+                raise OSError("official source unavailable")
+            with self.assertRaisesRegex(RuntimeError,"RUZ appears unavailable"):
+                collector.collect_all(root,get=broken,nap=lambda _:None,workers=2,
+                    min_interval=0.5,clock=lambda:"2026-11-21T00:00:00+00:00")
+            self.assertEqual(collector.read(root/"data"/"status.json")["checked_at"],"previous")
+
+    def test_full_scan_enforces_upstream_concurrency_and_rate_bounds(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with self.assertRaisesRegex(ValueError,"Unsafe"):
+                collector.collect_all(root,workers=8)
+            with self.assertRaisesRegex(ValueError,"Unsafe"):
+                collector.collect_all(root,min_interval=0)
+
 if __name__=="__main__":
     unittest.main()
