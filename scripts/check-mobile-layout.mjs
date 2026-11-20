@@ -56,31 +56,43 @@ try{
     }
     await page.locator('#onboard.hidden').waitFor({state:'attached',timeout:6500});
     if(width===393){
-      // A hard reload must create a NEW inline SVG and restart every stroke from zero.
+      // Record each animation frame inside the page before Playwright can be delayed
+      // by an overloaded runner. A static SVG would never produce the 3 phases.
+      await page.addInitScript(() => {
+        const nativeRaf=window.requestAnimationFrame.bind(window);
+        window.__paraInkFrames=[];
+        window.requestAnimationFrame=function(callback){
+          return nativeRaf(function(now){
+            const svg=document.querySelector('#onboard svg.p2-ink-svg');
+            if(svg && window.__paraInkFrames.length<300){
+              window.__paraInkFrames.push([...svg.querySelectorAll('.para-stroke')].map(p=>Number(p.style.strokeDashoffset)));
+            }
+            return callback(now);
+          });
+        };
+      });
       for(let attempt=1;attempt<=3;attempt++){
         await page.reload({waitUntil:'domcontentloaded'});
         const fresh=page.locator('#onboard svg.p2-ink-svg');
         await fresh.waitFor({state:'visible',timeout:4500});
-        const initial=await fresh.evaluate(svg=>({
-          offset:Number(svg.querySelector('.p-stem').style.strokeDashoffset),
-          count:svg.querySelectorAll('.para-stroke').length
-        }));
-        if(initial.count!==11||initial.offset<0.50){
-          failed=true;console.error("Reload "+attempt+" reused completed ink: "+JSON.stringify(initial));
-        }
-        await page.waitForTimeout(250);
-        const mid=await fresh.evaluate(svg=>Number(svg.querySelector('.p-stem').style.strokeDashoffset));
-        if(!(mid<initial.offset)){
-          failed=true;console.error("Reload "+attempt+" did not advance first stroke: "+initial.offset+" → "+mid);
-        }
         await page.locator('#onboard.hidden').waitFor({state:'attached',timeout:6500});
-        console.log("OK: reload "+attempt+" restarted and completed animated logo");
+        const replay=await page.evaluate(()=>({
+          frames:window.__paraInkFrames||[],
+          finalOffset:Number(document.querySelector('#onboard .dot-ink')?.style.strokeDashoffset)
+        }));
+        const startSeen=replay.frames.some(v=>v.length===11&&v.every(x=>x>=0.98));
+        const middleSeen=replay.frames.some(v=>v.length===11&&v[0]<=0.05&&v[10]>=0.98);
+        if(!startSeen||!middleSeen||replay.finalOffset>0.05){
+          failed=true;console.error("Reload "+attempt+" did not redraw 11 glyph strokes: "+JSON.stringify({
+            frames:replay.frames.length,startSeen,middleSeen,finalOffset:replay.finalOffset
+          }));
+        }else console.log("OK: reload "+attempt+" recorded ink from blank to final dot");
       }
       // Test the same code path used when Safari restores an already-open app.
       await page.evaluate(()=>window.dispatchEvent(Object.assign(new Event('pageshow'),{persisted:true})));
       await splash.waitFor({state:'visible',timeout:4500});
-      const restored=await splash.evaluate(svg=>Number(svg.querySelector('.p-stem').style.strokeDashoffset));
-      if(restored<0.80){failed=true;console.error("bfcache pageshow did not restart ink: "+restored);}
+      const restored=await splash.evaluate(svg=>Number(svg.querySelector('.dot-ink').style.strokeDashoffset));
+      if(restored<0.80){failed=true;console.error("bfcache pageshow did not restart the final ink stroke: "+restored);}
       await page.locator('#onboard.hidden').waitFor({state:'attached',timeout:6500});
       console.log("OK: bfcache pageshow restarted intro");
     }
