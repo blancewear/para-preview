@@ -87,3 +87,74 @@ h1{font-family:"Benzin",-apple-system,BlinkMacSystemFont,"Arial Black",sans-seri
  .group-number,.profile-number{font-size:45px}
 }
 @media(prefers-reduced-motion:reduce){.screen{animation:none!important}.lesson,.clean-row,.nav,.group-switch{transition:none!important}}
+
+
+/* PARA v4 · preserve information, refine hierarchy */
+.p4-page-head{padding-top:1px;margin-bottom:23px}
+.p4-page-head h1{margin:0}
+.p4-page-head .group-number,.p4-page-head .profile-number{margin:15px 0 7px;font-size:clamp(40px,8vw,52px)}
+.p4-overline{font-size:12px;letter-spacing:.04em;color:#61615d;margin:7px 0 0}
+.p4-intro{font-size:13px;line-height:1.5;color:#52524e;margin:7px 0 0}
+.p4-block{margin-bottom:20px}
+.p4-block .clean-row{margin:0}
+.p4-hint{font-size:12px;line-height:1.5;color:#65655f;padding:9px 6px 0}
+.p4-between{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.p4-goal{font-size:12px;color:#4e4e49;font-weight:600;white-space:nowrap}
+.p4-beta{background:#fff;border:1px solid #e7e7e2;border-radius:22px;padding:22px;margin:23px 0 27px}
+.p4-beta .beta-label{margin:0}
+.p4-beta h2,.p4-future h2{font-size:18px;font-weight:700;letter-spacing:-.035em;line-height:1.3}
+.p4-beta h2{margin:21px 0 11px}
+.p4-desc{font-size:13px;line-height:1.65;color:#44443f;margin:0 0 21px;max-width:550px}
+.p4-beta .progress{height:7px;background:#eaeae6;border-radius:999px;margin:0 0 12px;overflow:hidden}
+.p4-beta .fill{height:100%;border-radius:999px;background:#282825;transition:width .25s}
+.p4-counter{font-size:13px;color:#5d5d56}
+.p4-counter strong{font-size:15px;color:#22221f}
+.p4-footnote{font-size:12px;line-height:1.55;color:#6d6d67;margin:12px 0 18px}
+.p4-primary{width:100%;min-height:49px;border:0;border-radius:999px;background:#232320;color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:650;cursor:pointer;transition:background .18s}
+.p4-primary:hover{background:#41413e}
+.p4-primary span{font-size:17px;font-weight:400}
+.p4-future{margin-top:27px}
+.p4-future h2{margin:0 0 16px}
+.p4-roadmap{background:#fff;border:1px solid #e7e7e2;border-radius:21px;padding:0 18px}
+.p4-feature{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:17px 1px;min-height:60px;border-bottom:1px solid #ededeb}
+.p4-feature:last-child{border-bottom:0}
+.p4-feature span{font-size:14px;color:#272724;font-weight:560;line-height:1.45}
+.p4-feature small{font-size:11px;color:#656560;flex:0 0 112px;text-align:right;line-height:1.4}
+#profile .p4-page-head{margin-bottom:24px}
+#profile .profile-number{font-size:clamp(40px,8vw,51px)}
+.p4-quick{margin-bottom:15px}
+.p4-details{margin:11px 0;border-radius:20px;background:#fff;border-color:#e7e7e2}
+.p4-details summary{padding:19px 18px;min-height:61px;font-size:14px;line-height:1.35;letter-spacing:-.01em;align-items:center}
+.p4-details[open] summary{padding-bottom:14px}
+.p4-details .details-inner{padding:1px 18px 20px}
+.p4-details .field{padding:10px 0 13px}
+.p4-details .field label,.p4-details .p4-input-label{display:block;font-size:12px;font-weight:600;color:#4a4a46;margin-bottom:9px}
+.p4-details .field select,.p4-details .field input{background:#fafaf9!important;min-height:49px!important;padding:12px 14px!important;border-radius:14px!important;border:1px solid #e5e5df!important;color:#232320;font-size:15px}
+.p4-details .field select:focus,.p4-details .field input:focus{outline:2px solid #777;outline-offset:1px}
+.p4-details .group-results{margin:8px 0 0;max-height:225px;overflow-y:auto;border-radius:13px}
+.p4-details .group-option{border:1px solid #ededeb;border-radius:13px;background:#fafaf9;padding:12px;margin-bottom:6px;min-height:50px}
+.p4-details .group-option strong{font-size:13px;color:#272723}
+.p4-details .group-option span{line-height:1.4}
+.p4-details .group-option .availability{color:#5d5d58}
+.p4-field-hint{font-size:12px;line-height:1.55;color:#64645f;margin:8px 0 1px}
+.p4-details .source-note{font-size:12px;line-height:1.65;color:#575750;margin-top:18px;padding-top:14px;border-top:1px solid #efefea}
+.p4-details .source-note a{text-decoration:underline;text-underline-offset:3px;color:#272723;font-weight:600}
+.p4-details .save-button{min-height:47px;margin:7px 0 0}
+.p4-details .clean-message{margin:9px 0 0}
+.p4-details .course-stream{border-bottom:1px solid #ededeb;padding:14px 0}
+.p4-details .course-stream label{font-weight:600;color:#30302c;font-size:13px}
+.p4-details .course-stream:last-child{border-bottom:0}
+.p4-toggle-row{border:0;border-bottom:1px solid #eeeee9;margin:0;padding:15px 0;min-height:52px}
+.p4-toggle-row label{color:#262623;font-size:13px;line-height:1.45;cursor:pointer}
+.p4-details .toggle{flex:0 0 auto}
+.p4-reset{border:1px solid #e5e5df;background:#fafaf9;border-radius:999px;min-height:44px;padding:11px 19px;font-size:13px;font-weight:600;color:#383834;cursor:pointer}
+.p4-reset:hover{border-color:#acaca5}
+@media(max-width:649px){
+ .p4-beta{padding:19px 17px;border-radius:19px;margin:19px 0 25px}
+ .p4-roadmap{border-radius:18px;padding:0 15px}
+ .p4-feature{gap:10px}
+ .p4-feature small{flex-basis:92px}
+ .p4-details summary{padding:17px 16px}
+ .p4-details .details-inner{padding:0 16px 18px}
+}
+@media(prefers-reduced-motion:reduce){.p4-primary,.p4-beta .fill{transition:none!important}}
