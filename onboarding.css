@@ -6,7 +6,8 @@ html.para-first .shell{display:none!important}
 .para-onboard .ob-wrap{max-width:510px;min-height:100dvh;margin:auto;padding:23px 25px 30px;display:flex;flex-direction:column}
 .para-onboard .ob-top{display:flex;justify-content:space-between;align-items:center}
 .para-onboard .ob-logo{font-size:28px;font-weight:760;letter-spacing:-1.8px}
-.para-onboard .ob-count{font-size:12px;color:#888}
+.para-onboard .ob-count{font-size:12px;color:#888;margin-left:auto}
+.para-onboard .ob-cancel{border:0;background:transparent;color:#777;padding:8px 0 8px 14px;font-size:25px;line-height:1;cursor:pointer}
 .para-onboard .ob-main{padding-top:min(9vh,76px);flex:1}
 .para-onboard h1{font-size:35px;font-weight:670;letter-spacing:-1.5px;line-height:1.1;margin:0 0 13px}
 .para-onboard .ob-intro{font-size:14px;color:#747474;line-height:1.55;margin:0 0 31px;max-width:365px}
