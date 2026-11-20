@@ -3,7 +3,7 @@
 'use strict';
 var root=document.getElementById('onboard'),frame=document.getElementById('obFrame');
 if(!root||!frame)return;
-var P={step:0,schools:[],school:null,course:null,group:null,query:'',searchSeq:0,screenSeq:0,lessons:[],subChoices:[],langChoices:[],selected:{},loading:false};
+var P={step:0,schools:[],school:null,course:null,group:null,query:'',searchSeq:0,screenSeq:0,lessons:[],subChoices:[],langChoices:[],selected:{},languageCategory:null,loading:false};
 var el=function(id){return document.getElementById(id)};
 var esc2=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var filled=function(map,choices){return choices.every(function(c){return !!map[c.name]})};
@@ -84,7 +84,8 @@ async function searchGroups(){
   var shown=groups.slice(0,q?20:15);
   host.innerHTML=shown.map(function(g){return card(g.id,g.number,g.program||'','group',P.group&&String(P.group.id)===String(g.id))}).join('');
   host.querySelectorAll('[data-group]').forEach(function(b){b.onclick=function(){
-   P.group=shown.find(function(g){return String(g.id)===b.dataset.group});if(!P.group)return;
+   var oldGroup=P.group&&String(P.group.id);P.group=shown.find(function(g){return String(g.id)===b.dataset.group});if(!P.group)return;
+   if(oldGroup!==String(P.group.id)){P.selected={};P.languageCategory=null}
    P.query=P.group.number;el('p2Query').value=P.query;el('p2Next').disabled=false;searchGroups();
   }});
   message.textContent=!groups.length?'Ничего не найдено. Проверь номер или подразделение.':q?'Найдено: '+groups.length+'. Выбери свою группу.':'Введи номер для поиска. Сейчас показаны первые группы.';
@@ -159,9 +160,27 @@ function drawSubgroups(){
 function drawLanguages(){
  if(P.step!==5)return;
  var host=el('p2Languages');
- if(!P.langChoices.length)host.innerHTML='<p class="p2-note">Языковые потоки пока не указаны в загруженном расписании. Ты сможешь выбрать их позже в профиле.</p>';
- else host.innerHTML=choiceSections(P.langChoices,'lang');
- bindChoices('lang',P.langChoices,drawLanguages);
+ if(!P.langChoices.length){
+   host.innerHTML='<p class="p2-note">Языковые потоки пока не указаны в загруженном расписании. Ты сможешь выбрать их позже в профиле.</p>';
+ }else{
+   var categories=[],categoryFor=function(value){
+     return /немецк|deutsch/i.test(value)?'Немецкий':/английск|english/i.test(value)?'Английский':/француз|fran[cç]ais/i.test(value)?'Французский':'Другие потоки';
+   };
+   P.langChoices.forEach(function(c){c.options.forEach(function(o){var k=categoryFor(o.value);if(categories.indexOf(k)<0)categories.push(k)})});
+   if(!P.languageCategory||categories.indexOf(P.languageCategory)<0)P.languageCategory=categories[0];
+   var tabs='<div class="p2-language-tabs">'+categories.map(function(k){return '<button type="button" data-langcat="'+esc2(k)+'" class="p2-language-tab '+(P.languageCategory===k?'active':'')+'">'+esc2(k)+'</button>'}).join('')+'</div>';
+   var sections=P.langChoices.map(function(c,i){
+     var filtered=c.options.filter(function(o){return categoryFor(o.value)===P.languageCategory});
+     if(!filtered.length)return '';
+     return '<section class="p2-choice-section"><div class="p2-choice-name">'+esc2(c.name)+'</div><div class="p2-choice-options">'+filtered.map(function(o){
+       var selected=P.selected[c.name]===o.value;
+       return '<button type="button" data-lang="'+i+'" data-value="'+esc2(o.value)+'" aria-pressed="'+selected+'" class="p2-pill '+(selected?'selected':'')+'"><span>'+esc2(o.value)+'</span>'+(o.detail?'<small>'+esc2(o.detail)+'</small>':'')+'</button>';
+     }).join('')+'</div></section>';
+   }).join('');
+   host.innerHTML=tabs+sections+'<p class="p2-note">Названия потоков сохранены так, как они указаны в РУЗ. Для части потоков язык в источнике не обозначен.</p>';
+   host.querySelectorAll('[data-langcat]').forEach(function(b){b.onclick=function(){P.languageCategory=b.dataset.langcat;drawLanguages()}});
+   bindChoices('lang',P.langChoices,drawLanguages);
+ }
  el('p2Next').disabled=!filled(P.selected,P.langChoices);
 }
 async function finish(){
@@ -181,6 +200,7 @@ async function finish(){
  document.documentElement.classList.remove('para-first');
  root.classList.add('p2-leave');
  await fetchSchedule();
+ if(typeof loadInstitutions==='function')loadInstitutions();
  setTimeout(function(){root.classList.remove('p2-leave');root.classList.add('hidden');tab('schedule')},250);
 }
 function boot(){
