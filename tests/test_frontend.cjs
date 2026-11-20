@@ -22,7 +22,14 @@ assert.ok(setup.includes('class="p2-big-logo" src="./para-logo.svg"'),'First-run
 assert.ok(setup.includes('class="p2-mini-logo" src="./para-logo.svg"'),'First-run navigation uses approved logo');
 assert.ok(html.includes('onboarding-v2.js?v=8'),'Staged onboarding script must be included');
 assert.ok(html.includes('onboarding-v2.css?v=6'),'Staged onboarding CSS must be included');
-assert.ok(html.includes('para-ui-v6.css?v=2'),'Bounded app stylesheet must be included');
+assert.ok(html.includes('para-ui-v6.css?v=3'),'Bounded app stylesheet must be included');
+assert.ok(html.includes('aria-current="page"'), 'Active tab must have accessibility state');
+assert.ok(html.includes("e.setAttribute('aria-current','page')"),'Tab switches must update accessibility state');
+assert.ok(html.includes('aria-pressed='),'Day selection must expose state');
+assert.ok(html.includes('monthFmt.format(b)'),'Compact week range must use month name');
+assert.ok(appCss.includes('para-tab-in'),'Tab transitions must use a stable opacity animation');
+assert.ok(appCss.includes('prefers-reduced-motion:reduce'),'Motion must respect accessibility settings');
+assert.ok(html.includes('<meta name="theme-color" content="#fafaf8">'),'Safari theme must match app surface');
 assert.ok(!html.includes('app-shell-v3.css?v=2') && !html.includes('mobile-layout-v5.css?v=1'),'Conflicting old layouts must be disabled');
 assert.ok(html.includes("if(window.PARA_SETUP_DONE){tab('schedule');fetchSchedule()}"),
  'Default schedule must not load before first-run selection');
