@@ -15,7 +15,7 @@ function button(label,disabled){
 }
 function render(title,kicker,body,footer,back){
  frame.className='p2-frame';
- frame.innerHTML='<div class="p2-top"><div class="p2-top-left">'+(back?'<button type="button" id="p2Back" class="p2-back" aria-label="Назад">←</button>':'<span class="p2-mini-logo">para.</span>')+'</div></div>'+
+ frame.innerHTML='<div class="p2-top"><div class="p2-top-left">'+(back?'<button type="button" id="p2Back" class="p2-back" aria-label="Назад">←</button>':'<img class="p2-mini-logo" src="./para-logo.svg" alt="para.">')+'</div></div>'+
  '<div class="p2-body p2-enter"><div class="p2-heading"><h1 class="p2-title">'+title+'</h1></div><div class="p2-body-inner">'+body+'</div></div>'+
  '<div class="p2-bottom">'+(footer||'')+'</div>';
  if(back)el('p2Back').onclick=function(){go(P.step-1)};
@@ -232,7 +232,7 @@ function boot(){
  document.documentElement.classList.add('para-first');
  root.classList.remove('hidden');
  frame.className='p2-frame p2-splash';
- frame.innerHTML='<div class="p2-big-logo">para.</div>';
+ frame.innerHTML='<img class="p2-big-logo" src="./para-logo.svg" alt="para.">';
  setTimeout(function(){if(root.classList.contains('hidden'))return;go(0)},window.matchMedia('(prefers-reduced-motion: reduce)').matches?150:1250);
 }
 boot();
