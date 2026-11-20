@@ -20,7 +20,7 @@ assert.ok(logo.includes('viewBox="0 0 796 190"') && logo.includes('fill-rule="ev
 assert.equal((html.match(/class="logo para-logo"/g)||[]).length,3,'Every app tab must use the approved logo');
 assert.ok(setup.includes('frame.innerHTML=PARA_INLINE_INK'), 'Splash must render the vector inline on every visit');
 assert.ok(setup.includes('class="p2-mini-logo" src="./para-logo.svg?v=4"'),'First-run navigation uses approved logo');
-assert.ok(html.includes('onboarding-v2.js?v=15'),'Staged onboarding script must be included');
+assert.ok(html.includes('onboarding-v2.js?v=16'),'Staged onboarding script must be included');
 assert.ok(html.includes('onboarding-v2.css?v=6'),'Staged onboarding CSS must be included');
 assert.ok(html.includes('para-ui-v6.css?v=7'),'Bounded app stylesheet must be included');
 assert.ok(html.includes('Сменить учебную группу'), 'Profile must clearly label change-group action');
@@ -50,6 +50,7 @@ assert.ok(setup.includes('para_onboarding_complete_v1'),'Onboarding must persist
 assert.ok(setup.includes('S.settings.groupId=String(P.group.id)'),'Selection must save exact RUZ ID');
 assert.ok(setup.includes('S.settings.streams'),'Per-subject stream choices must be stored');
 assert.ok(setup.includes('queryGroups('),'Client-side catalogue lookup is required');
+assert.ok(setup.includes("P.searchSeq++;el('p2Next').disabled=true;el('p2Matches').innerHTML=''"), 'Typing must immediately clear stale suggestions');
 assert.ok(setup.includes('Курс сохраним в профиле'), 'Course selector must not imply an unsupported RUZ filter');
 assert.ok(setup.includes('Копия расписания загружена'), 'Real cached group availability must be shown');
 assert.ok(html.includes('PARA_SCHEDULE_INDEX_READY=true'), 'Availability status should only be shown after verified index loads');
