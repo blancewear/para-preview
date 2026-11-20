@@ -50,6 +50,19 @@ class Safety(unittest.TestCase):
             with self.assertRaises(ValueError):
                 collector.store(root,{**group,"number":"171604"},p,"now")
             self.assertEqual(original,(root/"schedules"/"21096.json").read_bytes())
+    def test_catalogue_scans_across_schools_not_only_first_school(self):
+        groups=[{"id":str(20000+i),"number":str(100000+i),
+                 "institution_id":str((i//30)+1)} for i in range(150)]
+        groups.append({"id":"21096","number":"171605","institution_id":"28"})
+        batch, cursor, total=collector.selected({"groups":groups},0,14)
+        self.assertEqual(total,151)
+        self.assertEqual(cursor,14)
+        self.assertEqual(batch[0]["id"],"21096")
+        self.assertGreaterEqual(len({g["institution_id"] for g in batch}),5)
+        self.assertEqual(len({g["id"] for g in batch}),14)
+        second, _, _=collector.selected({"groups":groups},14,14)
+        self.assertFalse({g["id"] for g in batch}&{g["id"] for g in second})
+
     def test_cursor_and_failure_isolation(self):
         groups=[{"id":str(21000+i),"number":str(100000+i),"institution_id":"28"} for i in range(160)]
         with tempfile.TemporaryDirectory() as directory:
