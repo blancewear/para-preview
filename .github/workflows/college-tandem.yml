@@ -20,7 +20,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: para-schedule-data
+  group: ${{ github.event_name == 'pull_request' && format('para-college-verify-{0}', github.ref) || 'para-schedule-data' }}
   cancel-in-progress: false
 
 jobs:
