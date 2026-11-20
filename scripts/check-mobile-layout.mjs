@@ -31,12 +31,16 @@ try{
       localStorage.setItem("para_editorial_v02",JSON.stringify({group:"171605",groupId:"21096",institutionId:"28",streams:{},vk:""}));
     });
     await page.goto(origin,{waitUntil:"domcontentloaded"});
-    const splash=page.locator('#onboard .p2-big-logo');
+    const splash=page.locator('#onboard svg.p2-ink-svg');
     await splash.waitFor({state:'visible',timeout:4500});
-    const logoSource=await splash.getAttribute('src');
-    const svgMarkup=await page.evaluate(async path=>await (await fetch(path)).text(),logoSource);
-    if(!logoSource.includes('para-logo-draw.svg')||!svgMarkup.includes('stroke-dashoffset')||!svgMarkup.includes('ink-p')||!svgMarkup.includes('ink-dot')){
-      failed=true;console.error("Stroke-drawn logo asset missing at "+width+"px");
+    const inlineData=await splash.evaluate(svg=>({
+      strokes:svg.querySelectorAll('.para-stroke').length,
+      maskedGlyphs:svg.querySelectorAll('g.animated-mark path[mask]').length,
+      firstOffset:Number(svg.querySelector('.p-stem').style.strokeDashoffset),
+      hasImage:!!svg.querySelector('image')
+    }));
+    if(inlineData.strokes!==11||inlineData.maskedGlyphs!==5||inlineData.hasImage||inlineData.firstOffset<0.8){
+      failed=true;console.error("Inline SVG not reset to initial ink state at "+width+"px: "+JSON.stringify(inlineData));
     }
     if(width===393){
       const early=await splash.screenshot();
@@ -45,10 +49,39 @@ try{
       await page.waitForTimeout(650);
       const later=await splash.screenshot();
       if(early.equals(middle)||middle.equals(later)){
-        failed=true;console.error("Logo is not actually drawing frame by frame");
-      } else console.log("OK: SVG letter-writing changes between early, middle, and late frames");
+        failed=true;console.error("Inline logo is not drawing across early, middle, and late frames");
+      }else console.log("OK: vector handwriting changes across three frames");
     }
-    await page.locator('#onboard.hidden').waitFor({state:'attached',timeout:6000});
+    await page.locator('#onboard.hidden').waitFor({state:'attached',timeout:6500});
+    if(width===393){
+      // A hard reload must create a NEW inline SVG and restart every stroke from zero.
+      for(let attempt=1;attempt<=3;attempt++){
+        await page.reload({waitUntil:'domcontentloaded'});
+        const fresh=page.locator('#onboard svg.p2-ink-svg');
+        await fresh.waitFor({state:'visible',timeout:4500});
+        const initial=await fresh.evaluate(svg=>({
+          offset:Number(svg.querySelector('.p-stem').style.strokeDashoffset),
+          count:svg.querySelectorAll('.para-stroke').length
+        }));
+        if(initial.count!==11||initial.offset<0.80){
+          failed=true;console.error("Reload "+attempt+" reused completed ink: "+JSON.stringify(initial));
+        }
+        await page.waitForTimeout(250);
+        const mid=await fresh.evaluate(svg=>Number(svg.querySelector('.p-stem').style.strokeDashoffset));
+        if(!(mid<initial.offset)){
+          failed=true;console.error("Reload "+attempt+" did not advance first stroke: "+initial.offset+" → "+mid);
+        }
+        await page.locator('#onboard.hidden').waitFor({state:'attached',timeout:6500});
+        console.log("OK: reload "+attempt+" restarted and completed animated logo");
+      }
+      // Test the same code path used when Safari restores an already-open app.
+      await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));
+      await splash.waitFor({state:'visible',timeout:4500});
+      const restored=await splash.evaluate(svg=>Number(svg.querySelector('.p-stem').style.strokeDashoffset));
+      if(restored<0.80){failed=true;console.error("bfcache pageshow did not restart ink: "+restored);}
+      await page.locator('#onboard.hidden').waitFor({state:'attached',timeout:6500});
+      console.log("OK: bfcache pageshow restarted intro");
+    }
     const shellVisible=await page.locator('.shell').isVisible();
     if(!shellVisible){failed=true;console.error("App did not reveal after intro at "+width+"px");}
 
