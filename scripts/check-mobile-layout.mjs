@@ -5,7 +5,7 @@ import path from "node:path";
 import { chromium } from "playwright";
 
 const root = process.cwd();
-const mime = {".html":"text/html; charset=utf-8",".js":"text/javascript; charset=utf-8",".css":"text/css; charset=utf-8",".json":"application/json",".woff2":"font/woff2"};
+const mime = {".html":"text/html; charset=utf-8",".js":"text/javascript; charset=utf-8",".css":"text/css; charset=utf-8",".json":"application/json",".woff2":"font/woff2",".svg":"image/svg+xml"};
 const server = http.createServer(async (req,res)=>{
   try {
     const pathname = decodeURIComponent(new URL(req.url, "http://localhost").pathname);
@@ -32,6 +32,16 @@ try{
     });
     await page.goto(origin,{waitUntil:"domcontentloaded"});
     await page.locator("#schedule.screen.active").waitFor({state:"visible",timeout:12000});
+    const logoCheck=await page.locator('#schedule .para-logo').evaluate(img=>({
+      loaded:img.complete&&img.naturalWidth>0,
+      width:img.getBoundingClientRect().width,
+      height:img.getBoundingClientRect().height,
+      src:img.getAttribute('src')
+    }));
+    if(!logoCheck.loaded||!logoCheck.src.endsWith('para-logo.svg')||logoCheck.width>120||logoCheck.height>38){
+      failed=true;
+      console.error('Invalid approved logo asset at '+width+'px: '+JSON.stringify(logoCheck));
+    }
     for(const tab of ["schedule","group","profile"]){
       await page.locator('.bottom .nav[data-tab="'+tab+'"]').click();
       const data=await page.evaluate(()=>{
