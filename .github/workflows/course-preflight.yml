@@ -1,0 +1,42 @@
+name: PARA official course catalogue checks
+
+on:
+  push:
+    branches: [fix/preview-real-course-filtering-20261121]
+    paths:
+      - 'tests/test_catalog_colleges.py'
+      - '.github/workflows/course-preflight.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install catalogue parser
+        run: python -m pip install 'beautifulsoup4>=4.12,<5'
+      - name: Run course, form and college catalogue tests
+        run: |
+          python -m unittest discover -s tests -p 'test_catalog_colleges.py' -v
+          node --check onboarding-v2.js
+      - name: Verify complete live RUZ courses without publishing
+        run: |
+          python scripts/collect_catalog.py --output /tmp/para-confirmed-courses.json
+          python - <<'PY'
+          import json
+          from collections import Counter
+          cat=json.load(open('/tmp/para-confirmed-courses.json'))
+          counts=Counter(str(g.get('course')) for g in cat['groups'])
+          groups=len(cat['groups'])
+          known=sum(g.get('course') is not None for g in cat['groups'])
+          college=sum(str(g['institution_id'])=='21' for g in cat['groups'])
+          print(f'RUZ groups {groups}; with confirmed course {known}; Peter I college {college}; counts {dict(counts)}')
+          assert groups >= 900 and college >= 20
+          assert known > 0.8 * groups, 'Course extraction regressed'
+          PY

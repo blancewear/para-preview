@@ -145,7 +145,8 @@ window.fetch = async function(input,options) {
      const qs=new URLSearchParams((u.split('?')[1]||''));
      const search=(qs.get('q')||'').trim().toLowerCase();
      const inst=qs.get('institution_id')||'';
-     const filtered=payload.filter(g=>(!search||g.number.toLowerCase().includes(search))&&(!inst||g.institution_id===inst));
+     const wantedCourse=qs.get('course');
+     const filtered=payload.filter(g=>(!search||g.number.toLowerCase().includes(search))&&(!inst||String(g.institution_id)===inst)&&(!wantedCourse||g.course==null||String(g.course)===wantedCourse));
      return new Response(JSON.stringify(filtered),{status:200,headers:{'Content-Type':'application/json'}});
    }
    if(path==='/api/v1/schedule'){
@@ -398,9 +399,10 @@ $('share').onclick=async()=>{
 };
 
 // Catalogue-backed, institution-aware group search. No hardcoded list of schools.
-async function queryGroups(q,institutionId=''){
+async function queryGroups(q,institutionId='',course=null){
  await ensureCatalog();
  const params=new URLSearchParams({q,limit:'100'});if(institutionId)params.set('institution_id',institutionId);
+ if(course!=null)params.set('course',String(course));
  try{const r=await fetch('/api/v1/groups?'+params,{cache:'no-store'});return r.ok?await r.json():[]}catch(e){return []}
 }
 let searchTicket=0,searchTimer=0;
