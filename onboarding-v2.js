@@ -244,7 +244,7 @@ function boot(){
  document.documentElement.classList.add('para-first');
  root.classList.remove('hidden','p2-intro-out','p2-leave');
  frame.className='p2-frame p2-splash';
- frame.innerHTML='<img class="p2-big-logo" src="./para-logo.svg?v=4" alt="para.">';
+ frame.innerHTML='<img class="p2-big-logo" src="./para-logo-draw.svg?v=1" alt="para.">';
  setTimeout(function(){
   if(root.classList.contains('hidden')||!frame.classList.contains('p2-splash'))return;
   if(shouldSetup){
@@ -262,7 +262,7 @@ function boot(){
     document.documentElement.classList.remove('para-first');
    },reduced?0:350);
   }
- },reduced?90:1550);
+ },reduced?90:2700);
 }
 boot();
 })();
