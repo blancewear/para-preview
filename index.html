@@ -44,7 +44,7 @@ const PARA_STATIC_DATA = {"/api/v1/institutions":[{"id":"28","name":"Высша�
 
 // Institution IDs from the official SAFU RUZ index; schedule data is only available for 171605.
 PARA_STATIC_DATA["/api/v1/institutions"] = [{"id": "4", "name": "Высшая школа социально-гуманитарных наук и международной коммуникации"}, {"id": "28", "name": "Высшая школа экономики, управления и права"}, {"id": "15", "name": "Высшая инженерная школа"}, {"id": "1", "name": "Высшая школа естественных наук и технологий"}, {"id": "3", "name": "Высшая школа информационных технологий и автоматизированных систем"}, {"id": "13", "name": "Высшая школа педагогики, психологии и физической культуры"}, {"id": "36", "name": "Высшая школа рыболовства и морских технологий"}, {"id": "12", "name": "Высшая школа энергетики, нефти и газа"}, {"id": "6", "name": "Гуманитарный институт (Северодвинск)"}, {"id": "35", "name": "Научный отдел филиала САФУ (Северодвинск)"}, {"id": "23", "name": "Технический колледж (Северодвинск)"}, {"id": "33", "name": "Управление подготовки и аттестации НПК"}, {"id": "26", "name": "Институт судостроения и морской арктической техники (Севмашвтуз)"}];
-// Only the verified catalogue is downloaded; timetables remain the frozen snapshot.
+// The public catalogue and independently verified per-group schedule files are loaded progressively.
 const PARA_CATALOG_URL='https://raw.githubusercontent.com/blancewear/para-preview/main/catalog.json';
 let PARA_CATALOG_PROMISE=null;
 let PARA_CATALOG_READY=false;
@@ -73,6 +73,22 @@ async function ensureCatalog(){
  })();
  return PARA_CATALOG_PROMISE;
 }
+const PARA_SCHEDULE_IDS = new Set(['21096']);
+let PARA_SCHEDULE_INDEX_PROMISE=null;
+async function ensureScheduleIndex(){
+ if(PARA_SCHEDULE_INDEX_PROMISE)return PARA_SCHEDULE_INDEX_PROMISE;
+ PARA_SCHEDULE_INDEX_PROMISE=(async()=>{
+   try{
+     const r=await PARA_ORIGINAL_FETCH(new URL('./data/status.json',location.href),{cache:'no-store'});
+     if(!r.ok)return false;
+     const data=await r.json();
+     if(!Array.isArray(data.cached_ids))return false;
+     for(const id of data.cached_ids)if(/^\d{1,12}$/.test(String(id)))PARA_SCHEDULE_IDS.add(String(id));
+     return true;
+   }catch(e){return false;}
+ })();
+ return PARA_SCHEDULE_INDEX_PROMISE;
+}
 const PARA_ORIGINAL_FETCH = window.fetch.bind(window);
 window.fetch = async function(input,options) {
  const u=String(input), path=u.split('?')[0];
@@ -89,9 +105,24 @@ window.fetch = async function(input,options) {
    if(path==='/api/v1/schedule'){
      const qs=new URLSearchParams((u.split('?')[1]||''));
      const requested=qs.get('group_id')||'';
-     if(requested!=='21096'){
-       return new Response(JSON.stringify({group_id:requested,cached:false,source_status:'unavailable',last_success:null,periods:[]}),{status:200,headers:{'Content-Type':'application/json'}});
+     if(/^\d{1,12}$/.test(requested)){
+       try{
+         const url=new URL('./data/schedules/'+requested+'.json',location.href);
+         const response=await PARA_ORIGINAL_FETCH(url,{cache:'no-store'});
+         if(response.ok){
+           const doc=await response.json();
+           if(String(doc.group_id)===requested&&doc.cached===true&&
+              Array.isArray(doc.periods)&&doc.periods.some(p=>Array.isArray(p.lessons)&&p.lessons.length)){
+             return new Response(JSON.stringify(doc),{status:200,headers:{'Content-Type':'application/json'}});
+           }
+         }
+       }catch(e){/* Keep the last verified local copy on network failure. */}
      }
+     if(requested==='21096'){
+       return new Response(JSON.stringify(payload),{status:200,headers:{'Content-Type':'application/json'}});
+     }
+     return new Response(JSON.stringify({group_id:requested,cached:false,source_status:'unavailable',last_success:null,periods:[]}),
+       {status:200,headers:{'Content-Type':'application/json'}});
    }
    return new Response(JSON.stringify(payload),{status:200,headers:{'Content-Type':'application/json'}});
  }
@@ -121,7 +152,7 @@ if(!/^[0-9A-Za-zА-Яа-яЁё][0-9A-Za-zА-Яа-яЁё._-]{1,39}$/.test(v)){$('
   S.settings.group=found?found.number:v;S.settings.groupId=nextId;S.settings.institutionId=found?String(found.institution_id):String(institutionId||'');S.settings.vk=vk;
   if(changed){S.settings.streams={};R.lessons=[];R.groupSourceId=null;}
   persist();$('savedMsg').textContent='Сохраняем выбор…';await fetchSchedule();renderCourseStreams();
-  $('savedMsg').textContent=R.mode==='api'?'Выбрана группа '+S.settings.group+'. Показан сохранённый снимок.':R.mode==='cached'?'Показана локальная копия расписания.':'Группа '+S.settings.group+' выбрана, но её расписание в этой версии не загружено.';
+  $('savedMsg').textContent=R.mode==='api'?'Расписание группы '+S.settings.group+' загружено.':R.mode==='cached'?'Показана локальная копия расписания.':'Группа '+S.settings.group+' выбрана, но её расписание в этой версии не загружено.';
   refreshSuggestions();
 };['reminders','changes','rooms'].forEach(id=>$(id).onchange=()=>{S.settings[id]=$(id).checked;persist()});['minutes','scope'].forEach(id=>$(id).onchange=()=>{S.settings[id]=$(id).value;persist()});$('reset').onclick=()=>{try{localStorage.removeItem('para_editorial_v02')}catch(e){}location.reload()};$('openVK').onclick=()=>{if(S.settings.vk){window.open(S.settings.vk,'_blank','noopener,noreferrer')}else{tab('profile');$('vkInput').focus()}};$('share').onclick=async()=>{const message='PARA — больше, чем расписание. Присоединяйся к бета-тестированию! После 500 участников начнём разработку интеграции домашних заданий из ВК.';if(navigator.share){try{await navigator.share({title:'PARA',text:message})}catch(e){}}else if(navigator.clipboard){try{await navigator.clipboard.writeText(message);modal('Текст приглашения скопирован. Ссылку на приложение добавим после публикации.')}catch(e){modal(message)}}else modal(message)};
 
@@ -136,11 +167,12 @@ async function refreshSuggestions(){
  const ticket=++searchTicket,q=$('groupInput').value.trim(),iid=$('institutionInput').value;
 const host=$('groupResults');
   if(!q){host.innerHTML='';$('groupSearchHint').textContent='Введите номер или выберите другую группу.';return}
+  await ensureScheduleIndex();
   const scoped=await queryGroups(q,iid);
   const matches=scoped.length?scoped:(iid?await queryGroups(q,''):[]);
   if(ticket!==searchTicket)return;
   if(PARA_CATALOG_READY){$('groupSearchHint').textContent=`В каталоге САФУ: ${PARA_CATALOG_COUNT} групп.`;}
-  host.innerHTML=matches.slice(0,15).map(g=>`<button class="group-option" type="button" data-pick-id="${esc(g.id)}" data-pick-group="${esc(g.number)}" data-pick-institution="${esc(g.institution_id)}"><span><strong>${esc(g.number)}</strong><br><span>${esc((g.program?g.program+' · ':'')+(g.institution||'САФУ'))}</span></span><span class="availability">${String(g.id)==='21096'?'Есть сохранённое расписание':'Расписание пока недоступно'}</span></button>`).join('');
+  host.innerHTML=matches.slice(0,15).map(g=>`<button class="group-option" type="button" data-pick-id="${esc(g.id)}" data-pick-group="${esc(g.number)}" data-pick-institution="${esc(g.institution_id)}"><span><strong>${esc(g.number)}</strong><br><span>${esc((g.program?g.program+' · ':'')+(g.institution||'САФУ'))}</span></span><span class="availability">${PARA_SCHEDULE_IDS.has(String(g.id))?'Расписание загружено':'Расписание пока недоступно'}</span></button>`).join('');
   $('groupSearchHint').textContent=matches.length?`Найдено в каталоге САФУ: ${matches.length}. Выберите группу и нажмите «Сохранить».`:(PARA_CATALOG_READY?'Группа не найдена в каталоге САФУ. Номер можно ввести вручную, но расписание пока не загружено.':'Полный каталог временно недоступен. Попробуйте обновить страницу; номер можно ввести вручную.');
   host.querySelectorAll('[data-pick-group]').forEach(btn=>btn.addEventListener('click',()=>{$('groupInput').value=btn.dataset.pickGroup;$('groupInput').dataset.selectedId=btn.dataset.pickId;
     $('institutionInput').value=btn.dataset.pickInstitution;updateInstitutionLink();refreshSuggestions();$('saveStudy').focus()}));
@@ -185,13 +217,6 @@ function mapLesson(l,i){
 async function fetchSchedule(){
  await ensureCatalog();
  const group=S.settings.group.trim(); const key='para_verified_'+(S.settings.groupId||group);
- // Public preview contains verified lessons for exactly one group. Never trust
- // cached data for another group, including data saved by older preview versions.
- if(group!=='171605'){
-   R.mode='demo';R.lessons=[];R.lastSuccess=null;R.sourceStatus='unavailable';R.groupSourceId=null;
-   try{localStorage.removeItem(key)}catch(e){}
-   schedule();renderCourseStreams();return;
- }
  try{
   const res=await fetch(`/api/v1/groups?q=${encodeURIComponent(group)}&limit=100`,{cache:'no-store'});
   if(!res.ok)throw Error('catalog request failed');
