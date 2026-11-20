@@ -281,11 +281,25 @@ function schedule(){
 }
 function profile(){
  $('profileGroupNumber').textContent=S.settings.group;
+ $('groupInput').value=S.settings.group;
+ $('groupResults').innerHTML='';
+ $('groupSearchHint').textContent='Введите номер группы — появятся варианты из каталога САФУ.';
  $('vkInput').value=S.settings.vk||'';
  $('savedMsg').textContent='';
+ $('studySavedMsg').textContent='';
+ ['reminders','changes','rooms'].forEach(id=>$(id).checked=Boolean(S.settings[id]));
+ ['minutes','scope'].forEach(id=>$(id).value=S.settings[id]||({minutes:'20',scope:'first'}[id]));
+ const updated=$('dataUpdatedAt');
+ if(updated)updated.textContent=R.lastSuccess?'Последнее обновление: '+new Date(R.lastSuccess).toLocaleString('ru-RU')+'.':'Расписание ещё не загружено.';
+ loadInstitutions();
  renderCourseStreams();
 }
-function group(){$('groupId').textContent=S.settings.group}
+function group(){
+ $('groupId').textContent=S.settings.group;
+ $('vkHint').textContent=S.settings.vk?'Ссылка сохранена':'Добавьте ссылку в профиле';
+ $('fill').style.width='0%';
+ $('users').textContent='— участников';
+}
 function tab(id){S.tab=id;document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===id));document.querySelectorAll('.nav').forEach(e=>e.classList.toggle('active',e.dataset.tab===id));if(id==='schedule')schedule();if(id==='profile')profile();if(id==='group')group();window.scrollTo({top:0,behavior:'instant'})}
 function modal(t){$('modalText').textContent=t;$('modal').classList.add('open')}
 function close(){$('modal').classList.remove('open')}
@@ -294,6 +308,35 @@ $('modal').onclick=e=>{if(e.target===$('modal'))close()};
 document.querySelectorAll('.nav').forEach(e=>e.onclick=()=>tab(e.dataset.tab));
 $('prev').onclick=()=>{S.week=Math.max(-20,S.week-1);S.expanded=null;schedule()};
 $('next').onclick=()=>{S.week=Math.min(20,S.week+1);S.expanded=null;schedule()};
+
+$('saveStudy').onclick=async()=>{
+ const value=$('groupInput').value.trim(),institutionId=$('institutionInput').value;
+ const notice=$('studySavedMsg');
+ if(!/^[0-9A-Za-zА-Яа-яЁё][0-9A-Za-zА-Яа-яЁё._-]{1,39}$/.test(value)){
+   notice.textContent='Проверь номер группы';return;
+ }
+ const matches=await queryGroups(value,institutionId);
+ const exact=matches.filter(g=>g.number.toLowerCase()===value.toLowerCase());
+ const chosen=exact.find(g=>String(g.id)===$('groupInput').dataset.selectedId);
+ if(exact.length>1&&!chosen){notice.textContent='Найдено несколько групп — уточни высшую школу';return}
+ const found=chosen||exact[0]||null;
+ if(!found && !window.PARA_STATIC_DATA){notice.textContent='Группа не найдена в каталоге РУЗ PARA';return}
+ const nextId=found?String(found.id):'';
+ const changed=String(S.settings.groupId||'')!==nextId||S.settings.group!==value;
+ S.settings.group=found?found.number:value;
+ S.settings.groupId=nextId;
+ S.settings.institutionId=found?String(found.institution_id):String(institutionId||'');
+ if(changed){S.settings.streams={};R.lessons=[];R.groupSourceId=null;}
+ persist();
+ notice.textContent='Сохраняем…';
+ await fetchSchedule();
+ renderCourseStreams();
+ notice.textContent=R.mode==='api'?'Расписание загружено':R.mode==='cached'?'Показана сохранённая копия расписания':'Группа сохранена. Расписание пока недоступно.';
+ $('profileGroupNumber').textContent=S.settings.group;
+ $('groupResults').innerHTML='';
+};
+['reminders','changes','rooms'].forEach(id=>$(id).onchange=()=>{S.settings[id]=$(id).checked;persist()});
+['minutes','scope'].forEach(id=>$(id).onchange=()=>{S.settings[id]=$(id).value;persist()});
 function editStudy(){if(typeof window.paraOpenOnboarding==='function')window.paraOpenOnboarding();else modal('Не удалось открыть выбор группы')}
 $('quickGroup').onclick=editStudy;
 $('editStudy').onclick=editStudy;
@@ -324,6 +367,54 @@ async function queryGroups(q,institutionId=''){
  await ensureCatalog();
  const params=new URLSearchParams({q,limit:'100'});if(institutionId)params.set('institution_id',institutionId);
  try{const r=await fetch('/api/v1/groups?'+params,{cache:'no-store'});return r.ok?await r.json():[]}catch(e){return []}
+}
+let searchTicket=0,searchTimer=0;
+async function refreshSuggestions(){
+ const ticket=++searchTicket;
+ const q=$('groupInput').value.trim(),iid=$('institutionInput').value;
+ const host=$('groupResults');
+ if(!q){host.innerHTML='';$('groupSearchHint').textContent='Введи номер группы';return}
+ const matches=await queryGroups(q,iid);
+ if(ticket!==searchTicket)return;
+ host.innerHTML=matches.slice(0,12).map(g=>
+   '<button type="button" class="group-option" data-pick-id="'+esc(g.id)+'" data-pick-group="'+esc(g.number)+'" data-pick-institution="'+esc(g.institution_id)+'"><span><strong>'+esc(g.number)+'</strong><br><span>'+esc(g.program||g.institution||'САФУ')+'</span></span><span class="availability">Выбрать</span></button>'
+ ).join('');
+ $('groupSearchHint').textContent=matches.length?'Выбери группу из списка':'Группа не найдена в каталоге';
+ host.querySelectorAll('[data-pick-id]').forEach(btn=>btn.onclick=()=>{
+   $('groupInput').value=btn.dataset.pickGroup;
+   $('groupInput').dataset.selectedId=btn.dataset.pickId;
+   $('institutionInput').value=btn.dataset.pickInstitution;
+   host.innerHTML='';
+   $('groupSearchHint').textContent='Группа выбрана';
+   updateInstitutionLink();
+ });
+}
+$('groupInput').addEventListener('input',()=>{
+ delete $('groupInput').dataset.selectedId;
+ clearTimeout(searchTimer);
+ searchTimer=setTimeout(refreshSuggestions,220);
+});
+$('institutionInput').addEventListener('change',()=>{
+ delete $('groupInput').dataset.selectedId;
+ updateInstitutionLink();
+ $('groupResults').innerHTML='';
+});
+function updateInstitutionLink(){
+ const id=$('institutionInput').value,link=$('institutionRuzLink');
+ link.href=id?'https://ruz.narfu.ru/?groups=&institution='+encodeURIComponent(id):'https://ruz.narfu.ru/';
+ link.textContent=id?'Список групп этой высшей школы ↗':'Список групп на сайте САФУ ↗';
+}
+async function loadInstitutions(){
+ try{
+   if(typeof ensureCatalog==='function')await ensureCatalog();
+   const r=await fetch('/api/v1/institutions',{cache:'no-store'});
+   if(!r.ok)return;
+   const list=await r.json();
+   if(!Array.isArray(list))return;
+   $('institutionInput').innerHTML='<option value="">Все подразделения САФУ</option>'+list.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('');
+   $('institutionInput').value=S.settings.institutionId||'';
+   updateInstitutionLink();
+ }catch(e){}
 }
 function renderCourseStreams(){
  const host=$('courseStreams');if(!host)return;
