@@ -1,0 +1,33 @@
+name: PARA official college catalogue preflight
+
+on:
+  push:
+    branches: [feat/official-peter-college-catalog-20261121]
+    paths:
+      - 'tests/test_catalog_colleges.py'
+      - '.github/workflows/college-catalog-preflight.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_catalog_colleges.py' -v
+      - name: Fetch complete official RUZ index including Peter I college
+        run: |
+          python scripts/collect_catalog.py --output /tmp/para-college-catalog.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/para-college-catalog.json'))
+          schools={s['id'] for s in x['institutions']}
+          college=[g for g in x['groups'] if g['institution_id']=='21']
+          assert '21' in schools and college, 'No official Peter I college records'
+          print(f"Verified official institutions {len(schools)}, groups {len(x['groups'])}, Peter I groups {len(college)}")
+          PY
