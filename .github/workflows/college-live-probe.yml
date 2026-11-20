@@ -1,0 +1,22 @@
+name: PARA college official Livewire isolated probe
+
+on:
+  push:
+    branches: [feat/independent-college-feeds-20261121]
+    paths:
+      - '.github/workflows/college-live-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read one public college schedule without publication
+        run: python scripts/collect_tandem.py --root . --limit 1 --weeks 2 --pause 2
