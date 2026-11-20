@@ -32,7 +32,7 @@ jobs:
           css = Path("onboarding-v2.css").read_text()
           js = Path("onboarding-v2.js").read_text()
           assert 'onboarding-v2.css?v=6' in html
-          assert 'onboarding-v2.js?v=7' in html
+          assert 'onboarding-v2.js?v=8' in html
           assert 'id="onboard"' in html
           assert "obBoot();" not in html
           assert "border-radius:999px" in css
@@ -40,7 +40,7 @@ jobs:
           assert "p2-count" not in js
           assert "p2-kicker" not in js
           app = Path("para-ui-v6.css").read_text()
-          assert 'para-ui-v6.css?v=1' in html
+          assert 'para-ui-v6.css?v=2' in html
           assert 'app-shell-v3.css?v=2' not in html
           assert 'mobile-layout-v5.css?v=1' not in html
           assert 'height:100dvh' in app
@@ -65,6 +65,10 @@ jobs:
           assert "function profile()" in html
           assert ".clean-row" in app and ".lesson" in app
           assert "obBoot()" not in html
+          logo = Path("para-logo.svg").read_text()
+          assert 'viewBox="0 0 806 201"' in logo
+          assert html.count('class="logo para-logo"') == 3
+          assert 'class="p2-big-logo" src="./para-logo.svg"' in js
           assert "function drawLanguages()" in js
           assert "function drawSubgroups()" in js
           data = json.loads(Path("data/schedules/21096.json").read_text())
