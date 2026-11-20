@@ -146,7 +146,24 @@ def selected(catalog,cursor,limit):
     groups=catalog.get("groups",[])
     if not 150<=len(groups)<=5000 or len({g["id"] for g in groups})!=len(groups):
         raise ValueError("Incomplete group catalogue")
-    groups=sorted(groups,key=lambda g:(0 if g["id"]=="21096" else 1 if g["institution_id"]=="28" else 2,g["number"].casefold(),g["id"]))
+    # Interleave institutions so the first batches cover the entire
+    # university instead of spending days on a single high school.
+    # The pilot remains first; every group still appears exactly once per loop.
+    pilot=next((g for g in groups if str(g["id"])=="21096"),None)
+    buckets={}
+    for g in groups:
+        if pilot and str(g["id"])==str(pilot["id"]):
+            continue
+        buckets.setdefault(str(g["institution_id"]),[]).append(g)
+    for values in buckets.values():
+        values.sort(key=lambda g:(g["number"].casefold(),g["id"]))
+    ids=sorted(buckets,key=lambda x:(0,int(x)) if x.isdecimal() else (1,x))
+    ordered=[pilot] if pilot else []
+    while any(buckets.values()):
+        for iid in ids:
+            if buckets[iid]:
+                ordered.append(buckets[iid].pop(0))
+    groups=ordered
     start=int(cursor)%len(groups)
     return [groups[(start+i)%len(groups)] for i in range(min(limit,len(groups)))],(start+limit)%len(groups),len(groups)
 
