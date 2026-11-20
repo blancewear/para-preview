@@ -133,11 +133,25 @@ async function loadLessons(){
  }catch(e){if(epoch!==P.screenSeq||P.step!==4)return;P.lessons=[];P.subChoices=[];P.langChoices=[]}
  drawSubgroups();
 }
+function shortOption(value,kind){
+ var text=String(value);
+ if(kind==='sub'){
+   var m=text.match(/_(\d{2})$/);
+   return m?'Подгруппа '+Number(m[1]):text;
+ }
+ if(kind==='lang'){
+   var g=text.match(/^ИЯ_Немецкий_(\d+)$/i);
+   if(g)return 'Поток '+Number(g[1]);
+   var v=text.match(/_№(\d+)/);
+   if(v)return 'Поток №'+v[1];
+ }
+ return text;
+}
 function choiceSections(choices,prefix){
  return choices.map(function(c,i){
   return '<section class="p2-choice-section"><div class="p2-choice-name">'+esc2(c.name)+'</div><div class="p2-choice-options">'+c.options.map(function(o){
     var value=P.selected[c.name]===o.value;
-    return '<button type="button" class="p2-pill '+(value?'selected':'')+'" data-'+prefix+'="'+esc2(i)+'" data-value="'+esc2(o.value)+'" aria-pressed="'+String(value)+'"><span>'+esc2(o.value)+'</span></button>';
+    return '<button type="button" class="p2-pill '+(value?'selected':'')+'" data-'+prefix+'="'+esc2(i)+'" data-value="'+esc2(o.value)+'" aria-pressed="'+String(value)+'"><span>'+esc2(shortOption(o.value,prefix))+'</span></button>';
   }).join('')+'</div></section>';
  }).join('');
 }
@@ -173,11 +187,11 @@ function drawLanguages(){
      if(!filtered.length)return '';
      return '<section class="p2-choice-section"><div class="p2-choice-name">'+esc2(c.name)+'</div><div class="p2-choice-options">'+filtered.map(function(o){
        var selected=P.selected[c.name]===o.value;
-       return '<button type="button" data-lang="'+i+'" data-value="'+esc2(o.value)+'" aria-pressed="'+selected+'" class="p2-pill '+(selected?'selected':'')+'"><span>'+esc2(o.value)+'</span></button>';
+       return '<button type="button" data-lang="'+i+'" data-value="'+esc2(o.value)+'" aria-pressed="'+selected+'" class="p2-pill '+(selected?'selected':'')+'"><span>'+esc2(shortOption(o.value,'lang'))+'</span></button>';
      }).join('')+'</div></section>';
    }).join('');
    host.innerHTML=tabs+sections;
-   host.querySelectorAll('[data-langcat]').forEach(function(b){b.onclick=function(){P.languageCategory=b.dataset.langcat;drawLanguages()}});
+   host.querySelectorAll('[data-langcat]').forEach(function(b){b.onclick=function(){if(P.languageCategory!==b.dataset.langcat){P.langChoices.forEach(function(choice){delete P.selected[choice.name]});P.languageCategory=b.dataset.langcat}drawLanguages()}});
    bindChoices('lang',P.langChoices,drawLanguages);
  }
  el('p2Next').disabled=!filled(P.selected,P.langChoices);
