@@ -91,6 +91,10 @@ class Adapter(unittest.TestCase):
             doc = tandem.read_json(root / "data" / "schedules" / "20967.json")
             self.assertEqual(doc["source_provider"], "ttt.narfu.ru")
             self.assertEqual(len(doc["periods"][0]["lessons"]), 1)
+            status = tandem.read_json(root / "data" / "status.json")
+            self.assertEqual(status["groups_cached_total"], 1)
+            self.assertEqual(status["cached_ids"], ["20967"])
+            self.assertEqual(status["college_groups_with_lessons"], 1)
 
 
 if __name__ == "__main__":
