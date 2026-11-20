@@ -44,6 +44,16 @@ try{
     }
     for(const tab of ["schedule","group","profile"]){
       await page.locator('.bottom .nav[data-tab="'+tab+'"]').click();
+      const activeTabStates=await page.locator('.bottom .nav[aria-current="page"]').evaluateAll(items=>items.map(el=>el.dataset.tab));
+      if(activeTabStates.length!==1||activeTabStates[0]!==tab){
+        failed=true;console.error(width+"x"+height+" / "+tab+" active tab semantics mismatch: "+activeTabStates.join(","));
+      }
+      if(tab==="schedule"){
+        const pressed=await page.locator('#days .day[aria-pressed="true"]').count();
+        if(pressed!==1){failed=true;console.error(width+"x"+height+" schedule: expected one pressed day, got "+pressed);}
+        const range=await page.locator('#weeklabel').innerText();
+        if(!range.includes("–")){failed=true;console.error("Missing compact week range: "+range);}
+      }
       const data=await page.evaluate(()=>{
         const shell=document.querySelector(".shell"),content=document.querySelector(".content"),nav=document.querySelector(".bottom");
         const sr=shell.getBoundingClientRect(),cr=content.getBoundingClientRect(),nr=nav.getBoundingClientRect();
@@ -73,6 +83,15 @@ try{
       else console.log("OK "+width+"x"+height+" / "+tab);
     }
     if(width===393){
+      await page.locator('.bottom .nav[data-tab="schedule"]').click();
+      await page.locator('#days .day[data-day="3"]').click();
+      const selectedThursday=await page.locator('#days .day[data-day="3"]').getAttribute('aria-pressed');
+      if(selectedThursday!=="true"){failed=true;console.error("Day selection did not update aria-pressed");}
+      await page.emulateMedia({reducedMotion:"reduce"});
+      const reducedAnimation=await page.locator('#schedule').evaluate(el=>getComputedStyle(el).animationName);
+      if(reducedAnimation!=="none"){failed=true;console.error("Reduced-motion preference was ignored: "+reducedAnimation);}
+      await page.emulateMedia({reducedMotion:"no-preference"});
+
       await page.locator('.bottom .nav[data-tab="profile"]').click();
       await page.locator("#studyDetails summary").click();
       const overflow=await page.evaluate(()=>document.querySelector(".content").scrollWidth>document.querySelector(".content").clientWidth+1);
