@@ -1,15 +1,11 @@
-name: PARA official RUZ full schedule publisher
+name: PARA complete official RUZ timetable publisher
 
 on:
   workflow_dispatch:
-    inputs:
-      full_refresh:
-        description: 'Scan every group in bounded batches'
-        required: false
-        type: boolean
-        default: true
   schedule:
-    - cron: '12,27,42,57 * * * *'
+    # Try every 20 minutes. GitHub may delay scheduled starts; actual timing
+    # is measured in status.json, not promised as a hard deadline.
+    - cron: '7,27,47 * * * *'
   push:
     branches: [main]
     paths:
@@ -25,8 +21,10 @@ on:
 permissions:
   contents: write
 
+# Heavy RUZ collectors are serialized with the TANDEM college publisher.
+# Read-only PR checks never wait behind a long full-university sweep.
 concurrency:
-  group: para-schedule-data
+  group: ${{ github.event_name == 'pull_request' && format('para-ruz-review-{0}', github.ref) || 'para-schedule-data' }}
   cancel-in-progress: false
 
 jobs:
@@ -39,13 +37,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m unittest discover -s tests -p 'test_schedules.py' -v
-      - run: python -m py_compile scripts/collect_schedules.py
+      - name: Verify parallel publisher and last-good protections
+        run: |
+          python -m unittest discover -s tests -p 'test_schedules.py' -v
+          python -m py_compile scripts/collect_schedules.py
 
   sync:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 38
     steps:
       - uses: actions/checkout@v4
         with:
@@ -53,58 +53,55 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Verify parser and snapshot protections
+      - name: Check parser correctness and data-loss protections
         run: |
           python -m unittest discover -s tests -p 'test_schedules.py' -v
           python -m py_compile scripts/collect_schedules.py
-      - name: Check front-end schedule wiring
+      - name: Full official catalogue sweep with three paced requests
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          html = Path('index.html').read_text(encoding='utf-8')
-          assert './data/schedules/' in html
-          assert "if(group!=='171605')" not in html
-          print('Group selector and schedule source: OK')
-          PY
-      - name: Collect all groups on rollout, smaller batches on recurring schedule
-        shell: bash
-        env:
-          FULL_REFRESH: ${{ github.event_name == 'push' || inputs.full_refresh == true }}
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898299+github-actions[bot]@users.noreply.github.com'
-          if [[ "$FULL_REFRESH" == 'true' ]]; then
-            batches=8
-            limit=120
-          else
-            batches=1
-            limit=36
-          fi
-          for (( batch=1; batch<=batches; batch++ )); do
-            echo "::group::Official RUZ batch $batch of $batches"
-            python scripts/collect_schedules.py --root . --limit "$limit" --pause 1.6
-            git add -A data/
-            if ! git diff --cached --quiet; then
-              git commit -m "data: refresh verified RUZ group batch $batch/$batches"
-              git pull --rebase origin main
-              git push origin HEAD:main
-            fi
-            echo "::endgroup::"
-          done
-      - name: Validate published catalogue/schedule bookkeeping
+          python scripts/collect_schedules.py --root . --all --workers 3 --interval 0.9
+      - name: Reject incomplete or inconsistent publication
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           catalog = json.loads(Path('catalog.json').read_text(encoding='utf-8'))
-          state = json.loads(Path('data/sync_state.json').read_text(encoding='utf-8'))
           status = json.loads(Path('data/status.json').read_text(encoding='utf-8'))
-          known = {str(g['id']) for g in catalog['groups']}
-          cached = {p.stem for p in Path('data/schedules').glob('*.json')}
-          assert len(known) >= 150
-          assert cached <= known
-          assert len(cached) == status['groups_cached_total']
-          assert 0 <= state['cursor'] < len(known)
-          print(f"Catalogue: {len(known)}; published group schedules: {len(cached)}; cursor: {state['cursor']}")
+          state = json.loads(Path('data/sync_state.json').read_text(encoding='utf-8'))
+          expected = len(catalog['groups'])
+          completed = status['groups_completed']
+          assert 150 <= expected <= 5000
+          assert status['full_refresh'] is True
+          assert status['groups_total'] == status['groups_attempted'] == completed == expected
+          assert status['groups_ok'] + status['groups_empty'] + status['groups_failed'] == expected
+          assert len(status['cached_ids']) == status['groups_cached_total']
+          assert status['groups_cached_total'] >= 1
+          assert state['cursor'] == 0
+          print('RUZ sweep complete:', status['checked_at'], 'of', expected,
+                'ok', status['groups_ok'], 'empty', status['groups_empty'],
+                'failed', status['groups_failed'],
+                'cached', status['groups_cached_total'],
+                'seconds', status['scan_duration_seconds'])
           PY
+      - name: Publish only verified changes; retry competing main updates
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898299+github-actions[bot]@users.noreply.github.com'
+          git add -A data/
+          if git diff --cached --quiet; then
+            echo 'No verified RUZ changes to publish'
+            exit 0
+          fi
+          git commit -m 'data: full verified official RUZ refresh'
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase origin main
+            if git push origin HEAD:main; then
+              echo 'Published complete checked sweep'
+              exit 0
+            fi
+            sleep $((attempt * 3))
+          done
+          echo 'Cannot safely reconcile timetable publication' >&2
+          exit 1
