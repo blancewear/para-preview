@@ -135,6 +135,7 @@ async function ensureScheduleIndex(){
  try{return await PARA_SCHEDULE_INDEX_PROMISE}
  finally{if(!PARA_SCHEDULE_INDEX_READY)PARA_SCHEDULE_INDEX_PROMISE=null}
 }
+const PARA_PUBLIC_MIRROR_BASE='https://raw.githubusercontent.com/blancewear/para-preview/main/data/schedules/';
 const PARA_ORIGINAL_FETCH = window.fetch.bind(window);
 window.fetch = async function(input,options) {
  const u=String(input), path=u.split('?')[0];
@@ -152,19 +153,31 @@ window.fetch = async function(input,options) {
    if(path==='/api/v1/schedule'){
      const qs=new URLSearchParams((u.split('?')[1]||''));
      const requested=qs.get('group_id')||'';
-     if(window.PARA_SETUP_PAYLOAD&&String(window.PARA_SETUP_PAYLOAD.group_id)===requested)return new Response(JSON.stringify(window.PARA_SETUP_PAYLOAD),{status:200,headers:{'Content-Type':'application/json'}});
      if(/^\d{1,12}$/.test(requested)){
-       try{
-         const url=new URL('./data/schedules/'+requested+'.json',location.href);
-         const response=await PARA_ORIGINAL_FETCH(url,{cache:'no-store'});
-         if(response.ok){
-           const doc=await response.json();
-           if(String(doc.group_id)===requested&&doc.cached===true&&
-              Array.isArray(doc.periods)&&doc.periods.some(p=>Array.isArray(p.lessons)&&p.lessons.length)){
-             return new Response(JSON.stringify(doc),{status:200,headers:{'Content-Type':'application/json'}});
+       // Raw published data becomes available before a Pages redeployment.
+       const sources=[
+         PARA_PUBLIC_MIRROR_BASE+requested+'.json',
+         new URL('./data/schedules/'+requested+'.json',location.href)
+       ];
+       for(const url of sources){
+         const controller=new AbortController();
+         const timeout=setTimeout(()=>controller.abort(),3000);
+         try{
+           const response=await PARA_ORIGINAL_FETCH(url,{cache:'no-store',signal:controller.signal});
+           if(response.ok){
+             const doc=await response.json();
+             if(String(doc.group_id)===requested&&doc.cached===true&&
+                Array.isArray(doc.periods)&&doc.periods.some(p=>Array.isArray(p.lessons)&&p.lessons.length)){
+               return new Response(JSON.stringify(doc),{status:200,headers:{'Content-Type':'application/json'}});
+             }
            }
-         }
-       }catch(e){/* Keep the last verified local copy on network failure. */}
+         }catch(e){/* Preserve the saved timetable if both sources fail. */}
+         finally{clearTimeout(timeout)}
+       }
+     }
+     // Static setup data must never conceal a newer verified timetable.
+     if(window.PARA_SETUP_PAYLOAD&&String(window.PARA_SETUP_PAYLOAD.group_id)===requested){
+       return new Response(JSON.stringify(window.PARA_SETUP_PAYLOAD),{status:200,headers:{'Content-Type':'application/json'}});
      }
      if(requested==='21096'){
        return new Response(JSON.stringify(payload),{status:200,headers:{'Content-Type':'application/json'}});
@@ -532,7 +545,10 @@ async function fetchSchedule(){
    }
    schedule();renderCourseStreams();
  }
- clear();R.loading=true;schedule();
+ // Render the last verified copy before trying the network.
+ const hadCache=!!selectedId&&cachedFor(selectedId);
+ if(!hadCache)clear();
+ R.loading=!hadCache;schedule();
  try{
    await ensureCatalog();
    if(!current())return;
@@ -575,6 +591,52 @@ async function fetchSchedule(){
  finish();
 }
 
+
+
+let PARA_ACTIVE_REFRESH_IN_FLIGHT=false;
+let PARA_ACTIVE_REFRESH_LAST_ATTEMPT=0;
+async function refreshActiveSchedule(){
+ if(PARA_ACTIVE_REFRESH_IN_FLIGHT||R.loading||document.visibilityState!=='visible')return;
+ const gid=String(S.settings.groupId||'');
+ const number=String(S.settings.group||'').trim();
+ if(!/^\d{1,12}$/.test(gid)||!number)return;
+ const now=Date.now();
+ if(now-PARA_ACTIVE_REFRESH_LAST_ATTEMPT<30000)return;
+ PARA_ACTIVE_REFRESH_LAST_ATTEMPT=now;
+ const ticket=PARA_SCHEDULE_REQUEST;
+ PARA_ACTIVE_REFRESH_IN_FLIGHT=true;
+ try{
+   const res=await fetch('/api/v1/schedule?group_id='+encodeURIComponent(gid),{cache:'no-store'});
+   if(!res.ok)return;
+   const doc=await res.json();
+   if(ticket!==PARA_SCHEDULE_REQUEST||String(S.settings.groupId)!==gid||S.settings.group!==number)return;
+   if(!doc||String(doc.group_id)!==gid||(doc.group_number&&doc.group_number!==number)||
+       doc.cached!==true||!Array.isArray(doc.periods))return;
+   const lessons=doc.periods.flatMap(p=>Array.isArray(p.lessons)?p.lessons:[]);
+   if(!lessons.length)return;
+   const incoming=Date.parse(doc.last_success||'');
+   const current=Date.parse(R.lastSuccess||'');
+   if(R.mode==='api'&&((doc.last_success&&doc.last_success===R.lastSuccess)||
+      (Number.isFinite(incoming)&&Number.isFinite(current)&&incoming<current)))return;
+   // Never reset a week/day or a selected subgroup during background refresh.
+   R.lessons=lessons.map(mapLesson);
+   R.periods=doc.periods.map(p=>({start:p.start,end:p.end}));
+   R.mode='api';R.groupSourceId=gid;
+   R.sourceStatus=doc.source_status||'cached';R.lastSuccess=doc.last_success||null;
+   try{
+     localStorage.setItem('para_verified_'+gid,JSON.stringify({
+       groupId:gid,lessons:R.lessons,periods:R.periods,
+       lastSuccess:R.lastSuccess,sourceStatus:R.sourceStatus
+     }));
+   }catch(e){}
+   schedule();renderCourseStreams();
+ }catch(e){/* Keep the current verified copy on network failure. */}
+ finally{PARA_ACTIVE_REFRESH_IN_FLIGHT=false}
+}
+setInterval(refreshActiveSchedule,60000);
+document.addEventListener('visibilitychange',()=>{
+ if(document.visibilityState==='visible')refreshActiveSchedule();
+});
 
 if(window.PARA_SETUP_DONE){tab('schedule');fetchSchedule()}
 </script><script src="./onboarding-v2.js?v=18"></script></body></html>
