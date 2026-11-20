@@ -38,13 +38,70 @@
  .linkrow{padding:12px 0;min-height:44px}.group-switch{min-height:38px}
  .cap{line-height:1.45}.empty{padding:26px 0}.beta h2{margin-top:12px}
 }
-</style><link rel="stylesheet" href="./onboarding.css?v=21"><script id="para-preview-data">
+</style><style id="para-onboarding-style">
+/* PARA — fast first-run setup, independent of the timetable UI. */
+html.para-first .shell { display:none !important; }
+.para-setup[hidden] { display:none !important; }
+.para-setup { min-height:100dvh; background:#fff; color:#171717; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; -webkit-text-size-adjust:100%; }
+.para-setup * { box-sizing:border-box; }
+.para-setup .setup-wrap { max-width:510px; margin:0 auto; padding:23px 25px 35px; min-height:100dvh; display:flex; flex-direction:column; }
+.para-setup .setup-top { display:flex; justify-content:space-between; align-items:center; gap:20px; }
+.para-setup .setup-logo { font-size:28px; font-weight:760; letter-spacing:-1.9px; line-height:1.2; }
+.para-setup .setup-step { color:#828282; font-size:12px; white-space:nowrap; }
+.para-setup .setup-main { flex:1; padding-top:min(9vh,76px); }
+.para-setup h1 { font-size:35px; letter-spacing:-1.5px; font-weight:680; line-height:1.1; margin:0 0 12px; }
+.para-setup .setup-desc { color:#757575; font-size:14px; line-height:1.6; margin:0 0 32px; max-width:365px; }
+.para-setup .setup-field { margin:0 0 23px; }
+.para-setup .setup-label { display:block; color:#6d6d6d; font-size:12px; font-weight:560; margin:0 0 9px; }
+.para-setup .setup-input, .para-setup .setup-select { display:block; border:none; border-bottom:1px solid #dadada; border-radius:0; background:#fff; width:100%; color:#171717; min-height:48px; padding:8px 30px 9px 0; font:500 16px/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; outline:none; appearance:none; }
+.para-setup .setup-input:focus,.para-setup .setup-select:focus { border-bottom-color:#161616; }
+.para-setup .setup-input::placeholder { color:#aaa; font-weight:400; }
+.para-setup .select-shell { position:relative; }
+.para-setup .select-shell::after { content:'⌄'; position:absolute; right:5px; top:13px; font-size:21px; pointer-events:none; color:#777; }
+.para-setup .setup-micro { font-size:12px; color:#898989; line-height:1.6; margin:11px 0 0; }
+.para-setup .setup-results { margin-top:2px; border-top:1px solid #ededed; max-height:min(32vh,280px); overflow:auto; overscroll-behavior:contain; }
+.para-setup .setup-row { width:100%; border:0; border-bottom:1px solid #ededed; padding:13px 0; background:#fff; color:#171717; display:flex; align-items:center; gap:14px; justify-content:space-between; text-align:left; cursor:pointer; }
+.para-setup .setup-row .setup-number { font-size:15px; font-weight:630; display:block; margin-bottom:3px; }
+.para-setup .setup-row .setup-program { color:#808080; font-size:11px; line-height:1.45; display:block; }
+.para-setup .setup-row .setup-ready { white-space:nowrap; color:#555; font-size:11px; }
+.para-setup .setup-row[aria-pressed="true"] .setup-number::after { content:' ✓'; font-size:14px; }
+.para-setup .setup-row:focus-visible { outline:2px solid #555; outline-offset:-2px; }
+.para-setup .setup-row:hover { background:#fafafa; }
+.para-setup .setup-actions { position:sticky; bottom:0; background:#fff; padding:16px 0 calc(7px + env(safe-area-inset-bottom,0px)); margin-top:16px; border-top:1px solid #ededed; }
+.para-setup .setup-primary { display:block; width:100%; border:1px solid #151515; border-radius:9px; color:#fff; background:#171717; font-weight:610; font-size:14px; padding:16px 15px; min-height:50px; cursor:pointer; }
+.para-setup .setup-primary:disabled { background:#eaeaea; border-color:#eaeaea; color:#9d9d9d; cursor:not-allowed; }
+.para-setup .setup-back { border:0; background:none; font-size:13px; color:#666; text-decoration:underline; text-underline-offset:4px; padding:13px 0; cursor:pointer; }
+.para-setup .setup-choice { background:#f7f7f6; padding:17px 18px; margin-bottom:27px; border-radius:4px; }
+.para-setup .setup-choice strong { font-size:17px; }
+.para-setup .setup-choice div { margin-top:6px; font-size:12px; color:#757575; line-height:1.5; }
+.para-setup .setup-stream { padding:14px 0; border-bottom:1px solid #ededed; }
+.para-setup .setup-stream .setup-label { font-size:13px; color:#1d1d1d; margin-bottom:8px; }
+.para-setup .setup-stream select { width:100%; font-size:14px; background:transparent; padding:10px 0; border:none; border-bottom:1px solid #ddd; color:#252525; }
+.para-setup .setup-status { min-height:20px; font-size:12px; color:#747474; line-height:1.5; margin-top:12px; }
+.para-setup .setup-streams-empty { font-size:13px; color:#777; line-height:1.65; }
+.para-setup .setup-date-note { color:#989898; font-size:11px; margin-top:18px; line-height:1.5; }
+@media(max-width:649px) {
+ .para-setup .setup-wrap { padding:18px 20px 20px; }
+ .para-setup .setup-logo { font-size:25px; }
+ .para-setup .setup-main { padding-top:min(7.5vh,55px); }
+ .para-setup h1 { font-size:29px; }
+ .para-setup .setup-desc { font-size:13px; margin-bottom:25px; }
+ .para-setup .setup-field { margin-bottom:19px; }
+ .para-setup .setup-row { padding:11px 0; min-height:53px; }
+ .para-setup .setup-results { max-height:min(28vh,240px); }
+ .para-setup .setup-primary { min-height:49px; }
+}
+
+.para-setup .setup-row .setup-ready{white-space:normal;text-align:right;max-width:112px;flex-shrink:0;}
+
+</style><script id="para-preview-data">
 // Offline, frozen snapshot for UI evaluation. No external API is contacted.
 const PARA_STATIC_DATA = {"/api/v1/institutions":[{"id":"28","name":"Высшая школа экономики, управления и права"}],"/api/v1/groups":[{"id":"21096","number":"171605","institution_id":"28","institution":"Высшая школа экономики, управления и права","program":"Судебная и прокурорская деятельность","study_form":null}],"/api/v1/schedule":{"group_id":"21096","cached":true,"source_status":"cached","last_success":"2026-11-19T19:54:10+00:00","periods":[{"end":"2026-12-26","lessons":[{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-11-16","end":"09:55:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"08:20:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-11-16","end":"11:45:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"10:10:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Новгородский, 34","building":null,"date":"2026-11-16","end":"17:50:00","lesson_type":"Практическое занятие","room":"зал фитнеса \"Арктика\"","source_lesson_id":null,"start":"16:15:00","stream":null,"subgroup":null,"subject":"Прикладная физическая культура и спорт","teacher":"Нейман М.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-17","end":"13:35:00","lesson_type":"Лабораторная работа","room":"306","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":"171605_02","subject":"Информационные технологии в юридической деятельности","teacher":"Плотников А.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-17","end":"16:05:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"14:30:00","stream":null,"subgroup":null,"subject":"Практическая риторика","teacher":"Петрова Н.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-17","end":"17:50:00","lesson_type":"Практическое занятие","room":"428","source_lesson_id":null,"start":"16:15:00","stream":"ИЯ_Немецкий_02","subgroup":null,"subject":"Иностранный язык","teacher":"Соколова М.Л."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-17","end":"19:35:00","lesson_type":"Практическое занятие","room":"428","source_lesson_id":null,"start":"18:00:00","stream":"ИЯ_Немецкий_02","subgroup":null,"subject":"Иностранный язык","teacher":"Соколова М.Л."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-18","end":"09:55:00","lesson_type":"Практическое занятие","room":"201","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-18","end":"11:45:00","lesson_type":"Практическое занятие","room":"201","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Новгородский, 34","building":null,"date":"2026-11-18","end":"17:50:00","lesson_type":"Практическое занятие","room":"зал фитнеса \"Арктика\"","source_lesson_id":null,"start":"16:15:00","stream":null,"subgroup":null,"subject":"Прикладная физическая культура и спорт","teacher":"Нейман М.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-18","end":"19:35:00","lesson_type":"Практическое занятие","room":"428","source_lesson_id":null,"start":"18:00:00","stream":"ИЯ_Немецкий_02","subgroup":null,"subject":"Иностранный язык","teacher":"Соколова М.Л."},{"address":null,"building":null,"date":"2026-11-18","end":"21:15:00","lesson_type":"Лекция","room":"Дистанционное обучение ","source_lesson_id":null,"start":"19:40:00","stream":"История России - Л","subgroup":null,"subject":"История России","teacher":"Санковская О.М."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-19","end":"09:55:00","lesson_type":"Практическое занятие","room":"206","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№10 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Сафроненкова Е.Л."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-19","end":"09:55:00","lesson_type":"Практическое занятие","room":"418","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№12 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Жемчугова С.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-19","end":"09:55:00","lesson_type":"Практическое занятие","room":"419","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№13 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Астахова Т.Н."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-19","end":"09:55:00","lesson_type":"Практическое занятие","room":"110","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№9 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Вепрева Т.Б."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-19","end":"09:55:00","lesson_type":"Практическое занятие","room":"312","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№11 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Маслова М.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-19","end":"09:55:00","lesson_type":"Практическое занятие","room":"109","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№14 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Дергаева С.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-19","end":"11:45:00","lesson_type":"Практическое занятие","room":"418","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№12 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Жемчугова С.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-19","end":"11:45:00","lesson_type":"Практическое занятие","room":"419","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№13 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Астахова Т.Н."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-19","end":"11:45:00","lesson_type":"Практическое занятие","room":"110","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№9 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Вепрева Т.Б."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-19","end":"11:45:00","lesson_type":"Практическое занятие","room":"312","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№11 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Маслова М.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-19","end":"11:45:00","lesson_type":"Практическое занятие","room":"109","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№14 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Дергаева С.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-19","end":"11:45:00","lesson_type":"Практическое занятие","room":"206","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№10 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Сафроненкова Е.Л."},{"address":null,"building":null,"date":"2026-11-19","end":"21:15:00","lesson_type":"Практическое занятие","room":"Дистанционное обучение ","source_lesson_id":null,"start":"19:40:00","stream":null,"subgroup":null,"subject":"Физическая культура и спорт","teacher":"Варенцова И.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-20","end":"09:55:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"История России","teacher":"Санковская О.М."},{"address":"наб. Северной Двины, д. 17","building":null,"date":"2026-11-20","end":"11:45:00","lesson_type":"Лабораторная работа","room":"1426","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":"171605_ЦК_02","subject":"Цифровая культура","teacher":"Павлова М.А."},{"address":"наб. Северной Двины, д. 17","building":null,"date":"2026-11-20","end":"11:45:00","lesson_type":"Лабораторная работа","room":"1429","source_lesson_id":null,"start":"10:10:00","stream":"171602_ЦК_01, 171605_ЦК_01","subgroup":null,"subject":"Цифровая культура","teacher":"Шутрова И.В."},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-11-20","end":"13:35:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"12:00:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":null,"building":null,"date":"2026-11-20","end":"19:35:00","lesson_type":"Лекция","room":"Дистанционное обучение ","source_lesson_id":null,"start":"18:00:00","stream":"171601, 171602, 171603, 171604, 171605, 171606, 171607, 171608, 171609","subgroup":null,"subject":"Практическая риторика","teacher":"Онегина А.С."},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-11-21","end":"11:45:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"10:10:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-11-21","end":"13:35:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"12:00:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-23","end":"09:55:00","lesson_type":"Практическое занятие","room":"101","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-23","end":"11:45:00","lesson_type":"Практическое занятие","room":"101","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-23","end":"13:35:00","lesson_type":"Практическое занятие","room":"405","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":null,"subject":"Основы правовой и финансовой грамотности","teacher":"Черноудова М.Г."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-23","end":"16:05:00","lesson_type":"Практическое занятие","room":"405","source_lesson_id":null,"start":"14:30:00","stream":null,"subgroup":null,"subject":"Основы правовой и финансовой грамотности","teacher":"Черноудова М.Г."},{"address":"пр. Новгородский, 34","building":null,"date":"2026-11-23","end":"17:50:00","lesson_type":"Практическое занятие","room":"зал фитнеса \"Арктика\"","source_lesson_id":null,"start":"16:15:00","stream":null,"subgroup":null,"subject":"Прикладная физическая культура и спорт","teacher":"Нейман М.А."},{"address":null,"building":null,"date":"2026-11-23","end":"19:35:00","lesson_type":"Лекция","room":"Дистанционное обучение ","source_lesson_id":null,"start":"18:00:00","stream":"171601, 171602, 171603, 171604, 171605, 171606, 171607, 171608, 171609","subgroup":null,"subject":"Практическая риторика","teacher":"Онегина А.С."},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-11-24","end":"09:55:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"08:20:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"Основы правовой и финансовой грамотности","teacher":"Андрианова Е.В."},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-11-24","end":"11:45:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"10:10:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-11-24","end":"13:35:00","lesson_type":"Практическое занятие","room":"312","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-24","end":"16:05:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"14:30:00","stream":null,"subgroup":null,"subject":"Практическая риторика","teacher":"Петрова Н.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-24","end":"19:35:00","lesson_type":"Практическое занятие","room":"428","source_lesson_id":null,"start":"18:00:00","stream":"ИЯ_Немецкий_02","subgroup":null,"subject":"Иностранный язык","teacher":"Соколова М.Л."},{"address":null,"building":null,"date":"2026-11-25","end":"09:55:00","lesson_type":"Собрание","room":"Дистанционное обучение ","source_lesson_id":null,"start":"08:20:00","stream":"171604, 171605","subgroup":null,"subject":"Диспансеризация","teacher":null},{"address":null,"building":null,"date":"2026-11-25","end":"11:45:00","lesson_type":"Собрание","room":"Дистанционное обучение ","source_lesson_id":null,"start":"10:10:00","stream":"171604, 171605","subgroup":null,"subject":"Диспансеризация","teacher":null},{"address":"пр. Новгородский, 34","building":null,"date":"2026-11-25","end":"17:50:00","lesson_type":"Практическое занятие","room":"зал фитнеса \"Арктика\"","source_lesson_id":null,"start":"16:15:00","stream":null,"subgroup":null,"subject":"Прикладная физическая культура и спорт","teacher":"Нейман М.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-25","end":"19:35:00","lesson_type":"Практическое занятие","room":"428","source_lesson_id":null,"start":"18:00:00","stream":"ИЯ_Немецкий_02","subgroup":null,"subject":"Иностранный язык","teacher":"Соколова М.Л."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-26","end":"11:45:00","lesson_type":"Собрание","room":"101","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":null,"subject":"Психологичесий тренинг","teacher":null},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-11-26","end":"16:05:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"14:30:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-27","end":"09:55:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"История России","teacher":"Санковская О.М."},{"address":"наб. Северной Двины, д. 17","building":null,"date":"2026-11-27","end":"11:45:00","lesson_type":"Лабораторная работа","room":"1426","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":"171605_ЦК_02","subject":"Цифровая культура","teacher":"Павлова М.А."},{"address":"наб. Северной Двины, д. 17","building":null,"date":"2026-11-27","end":"11:45:00","lesson_type":"Лабораторная работа","room":"1415","source_lesson_id":null,"start":"10:10:00","stream":"171602_ЦК_01, 171605_ЦК_01","subgroup":null,"subject":"Цифровая культура","teacher":"Шутрова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-27","end":"13:35:00","lesson_type":"Лабораторная работа","room":"306","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":"171605_02","subject":"Информационные технологии в юридической деятельности","teacher":"Плотников А.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-27","end":"13:35:00","lesson_type":"Лабораторная работа","room":"206","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":"171605_01","subject":"Информационные технологии в юридической деятельности","teacher":"Кузнецов С.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-27","end":"16:05:00","lesson_type":"Практическое занятие","room":"429","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№14 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Дергаева С.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-27","end":"16:05:00","lesson_type":"Практическое занятие","room":"415","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№10 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Сафроненкова Е.Л."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-27","end":"16:05:00","lesson_type":"Практическое занятие","room":"110","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№13 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Астахова Т.Н."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-27","end":"16:05:00","lesson_type":"Практическое занятие","room":"305","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№9 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Вепрева Т.Б."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-27","end":"16:05:00","lesson_type":"Практическое занятие","room":"418","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№11 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Маслова М.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-27","end":"16:05:00","lesson_type":"Практическое занятие","room":"306","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№12 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Жемчугова С.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-28","end":"09:55:00","lesson_type":"Практическое занятие","room":"302","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№13 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Астахова Т.Н."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-11-28","end":"11:45:00","lesson_type":"Практическое занятие","room":"302","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№13 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Астахова Т.Н."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-28","end":"13:35:00","lesson_type":"Лабораторная работа","room":"206","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":"171605_01","subject":"Информационные технологии в юридической деятельности","teacher":"Кузнецов С.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-28","end":"16:05:00","lesson_type":"Лабораторная работа","room":"206","source_lesson_id":null,"start":"14:30:00","stream":null,"subgroup":"171605_01","subject":"Информационные технологии в юридической деятельности","teacher":"Кузнецов С.А."},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-11-30","end":"09:55:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"08:20:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-11-30","end":"11:45:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"10:10:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-30","end":"13:35:00","lesson_type":"Практическое занятие","room":"204","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-11-30","end":"16:05:00","lesson_type":"Практическое занятие","room":"204","source_lesson_id":null,"start":"14:30:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Новгородский, 34","building":null,"date":"2026-11-30","end":"17:50:00","lesson_type":"Практическое занятие","room":"зал фитнеса \"Арктика\"","source_lesson_id":null,"start":"16:15:00","stream":null,"subgroup":null,"subject":"Прикладная физическая культура и спорт","teacher":"Нейман М.А."},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-12-01","end":"09:55:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"08:20:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"Основы правовой и финансовой грамотности","teacher":"Андрианова Е.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-01","end":"11:45:00","lesson_type":"Лабораторная работа","room":"206","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":"171605_01","subject":"Информационные технологии в юридической деятельности","teacher":"Кузнецов С.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-01","end":"13:35:00","lesson_type":"Лабораторная работа","room":"306","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":"171605_02","subject":"Информационные технологии в юридической деятельности","teacher":"Плотников А.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-01","end":"16:05:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"14:30:00","stream":null,"subgroup":null,"subject":"Практическая риторика","teacher":"Петрова Н.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-01","end":"17:50:00","lesson_type":"Практическое занятие","room":"428","source_lesson_id":null,"start":"16:15:00","stream":"ИЯ_Немецкий_02","subgroup":null,"subject":"Иностранный язык","teacher":"Соколова М.Л."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-01","end":"19:35:00","lesson_type":"Практическое занятие","room":"428","source_lesson_id":null,"start":"18:00:00","stream":"ИЯ_Немецкий_02","subgroup":null,"subject":"Иностранный язык","teacher":"Соколова М.Л."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-02","end":"09:55:00","lesson_type":"Практическое занятие","room":"201","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-02","end":"11:45:00","lesson_type":"Практическое занятие","room":"204","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Новгородский, 34","building":null,"date":"2026-12-02","end":"17:50:00","lesson_type":"Практическое занятие","room":"зал фитнеса \"Арктика\"","source_lesson_id":null,"start":"16:15:00","stream":null,"subgroup":null,"subject":"Прикладная физическая культура и спорт","teacher":"Нейман М.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-02","end":"19:35:00","lesson_type":"Практическое занятие","room":"428","source_lesson_id":null,"start":"18:00:00","stream":"ИЯ_Немецкий_02","subgroup":null,"subject":"Иностранный язык","teacher":"Соколова М.Л."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-03","end":"09:55:00","lesson_type":"Практическое занятие","room":"206","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№10 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Сафроненкова Е.Л."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-03","end":"09:55:00","lesson_type":"Практическое занятие","room":"418","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№12 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Жемчугова С.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-03","end":"09:55:00","lesson_type":"Практическое занятие","room":"110","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№9 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Вепрева Т.Б."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-03","end":"09:55:00","lesson_type":"Практическое занятие","room":"312","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№11 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Маслова М.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-03","end":"09:55:00","lesson_type":"Практическое занятие","room":"109","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№14 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Дергаева С.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-03","end":"11:45:00","lesson_type":"Практическое занятие","room":"206","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№10 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Сафроненкова Е.Л."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-03","end":"11:45:00","lesson_type":"Практическое занятие","room":"418","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№12 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Жемчугова С.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-03","end":"11:45:00","lesson_type":"Практическое занятие","room":"110","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№9 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Вепрева Т.Б."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-03","end":"11:45:00","lesson_type":"Практическое занятие","room":"312","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№11 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Маслова М.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-03","end":"11:45:00","lesson_type":"Практическое занятие","room":"109","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№14 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Дергаева С.С."},{"address":null,"building":null,"date":"2026-12-03","end":"21:15:00","lesson_type":"Практическое занятие","room":"Дистанционное обучение ","source_lesson_id":null,"start":"19:40:00","stream":null,"subgroup":null,"subject":"Физическая культура и спорт","teacher":"Варенцова И.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-04","end":"09:55:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"История России","teacher":"Санковская О.М."},{"address":"наб. Северной Двины, д. 17","building":null,"date":"2026-12-04","end":"11:45:00","lesson_type":"Лабораторная работа","room":"1426","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":"171605_ЦК_02","subject":"Цифровая культура","teacher":"Павлова М.А."},{"address":"наб. Северной Двины, д. 17","building":null,"date":"2026-12-04","end":"11:45:00","lesson_type":"Лабораторная работа","room":"1415","source_lesson_id":null,"start":"10:10:00","stream":"171602_ЦК_01, 171605_ЦК_01","subgroup":null,"subject":"Цифровая культура","teacher":"Шутрова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-05","end":"09:55:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-07","end":"16:05:00","lesson_type":"Практическое занятие","room":"405","source_lesson_id":null,"start":"14:30:00","stream":null,"subgroup":null,"subject":"Основы правовой и финансовой грамотности","teacher":"Черноудова М.Г."},{"address":"пр. Новгородский, 34","building":null,"date":"2026-12-07","end":"17:50:00","lesson_type":"Практическое занятие","room":"зал фитнеса \"Арктика\"","source_lesson_id":null,"start":"16:15:00","stream":null,"subgroup":null,"subject":"Прикладная физическая культура и спорт","teacher":"Нейман М.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-08","end":"11:45:00","lesson_type":"Лабораторная работа","room":"206","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":"171605_01","subject":"Информационные технологии в юридической деятельности","teacher":"Кузнецов С.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-08","end":"13:35:00","lesson_type":"Лабораторная работа","room":"306","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":"171605_02","subject":"Информационные технологии в юридической деятельности","teacher":"Плотников А.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-08","end":"17:50:00","lesson_type":"Практическое занятие","room":"428","source_lesson_id":null,"start":"16:15:00","stream":"ИЯ_Немецкий_02","subgroup":null,"subject":"Иностранный язык","teacher":"Соколова М.Л."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-09","end":"11:45:00","lesson_type":"Практическое занятие","room":"204","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Новгородский, 34","building":null,"date":"2026-12-09","end":"17:50:00","lesson_type":"Практическое занятие","room":"зал фитнеса \"Арктика\"","source_lesson_id":null,"start":"16:15:00","stream":null,"subgroup":null,"subject":"Прикладная физическая культура и спорт","teacher":"Нейман М.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-11","end":"09:55:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"История России","teacher":"Санковская О.М."},{"address":"наб. Северной Двины, д. 17","building":null,"date":"2026-12-11","end":"11:45:00","lesson_type":"Лабораторная работа","room":"1426","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":"171605_ЦК_02","subject":"Цифровая культура","teacher":"Павлова М.А."},{"address":"наб. Северной Двины, д. 17","building":null,"date":"2026-12-11","end":"11:45:00","lesson_type":"Лабораторная работа","room":"1415","source_lesson_id":null,"start":"10:10:00","stream":"171602_ЦК_01, 171605_ЦК_01","subgroup":null,"subject":"Цифровая культура","teacher":"Шутрова И.В."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-11","end":"16:05:00","lesson_type":"Практическое занятие","room":"415","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№10 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Сафроненкова Е.Л."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-11","end":"16:05:00","lesson_type":"Практическое занятие","room":"110","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№13 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Астахова Т.Н."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-11","end":"16:05:00","lesson_type":"Практическое занятие","room":"305","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№9 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Вепрева Т.Б."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-11","end":"16:05:00","lesson_type":"Практическое занятие","room":"118","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№14 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Дергаева С.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-11","end":"16:05:00","lesson_type":"Практическое занятие","room":"117","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№12 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Жемчугова С.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-11","end":"16:05:00","lesson_type":"Практическое занятие","room":"202","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№11 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Маслова М.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-11","end":"19:35:00","lesson_type":"Практическое занятие","room":"428","source_lesson_id":null,"start":"18:00:00","stream":"ИЯ_Немецкий_02","subgroup":null,"subject":"Иностранный язык","teacher":"Соколова М.Л."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-12","end":"09:55:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-12","end":"11:45:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-12-12","end":"13:35:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"12:00:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"наб. Северной Двины, 54, корп. 1","building":null,"date":"2026-12-12","end":"16:05:00","lesson_type":"Лекция","room":"211","source_lesson_id":null,"start":"14:30:00","stream":"171601, 171602, 171603, 171604, 171605","subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-14","end":"09:55:00","lesson_type":"Практическое занятие","room":"401","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-14","end":"11:45:00","lesson_type":"Практическое занятие","room":"304","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":null,"subject":"Практическая риторика","teacher":"Петрова Н.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-14","end":"13:35:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-14","end":"16:05:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"14:30:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Новгородский, 34","building":null,"date":"2026-12-14","end":"17:50:00","lesson_type":"Практическое занятие","room":"зал фитнеса \"Арктика\"","source_lesson_id":null,"start":"16:15:00","stream":null,"subgroup":null,"subject":"Прикладная физическая культура и спорт","teacher":"Нейман М.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-15","end":"11:45:00","lesson_type":"Лабораторная работа","room":"206","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":"171605_01","subject":"Информационные технологии в юридической деятельности","teacher":"Кузнецов С.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-15","end":"13:35:00","lesson_type":"Лабораторная работа","room":"306","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":"171605_02","subject":"Информационные технологии в юридической деятельности","teacher":"Плотников А.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-15","end":"16:05:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"14:30:00","stream":null,"subgroup":null,"subject":"Практическая риторика","teacher":"Петрова Н.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-15","end":"17:50:00","lesson_type":"Практическое занятие","room":"428","source_lesson_id":null,"start":"16:15:00","stream":"ИЯ_Немецкий_02","subgroup":null,"subject":"Иностранный язык","teacher":"Соколова М.Л."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-16","end":"11:45:00","lesson_type":"Практическое занятие","room":"204","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Новгородский, 34","building":null,"date":"2026-12-16","end":"17:50:00","lesson_type":"Практическое занятие","room":"зал фитнеса \"Арктика\"","source_lesson_id":null,"start":"16:15:00","stream":null,"subgroup":null,"subject":"Прикладная физическая культура и спорт","teacher":"Нейман М.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-17","end":"09:55:00","lesson_type":"Практическое занятие","room":"206","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№10 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Сафроненкова Е.Л."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-17","end":"09:55:00","lesson_type":"Практическое занятие","room":"418","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№12 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Жемчугова С.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-17","end":"09:55:00","lesson_type":"Практическое занятие","room":"110","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№9 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Вепрева Т.Б."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-17","end":"09:55:00","lesson_type":"Практическое занятие","room":"312","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№11 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Маслова М.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-17","end":"09:55:00","lesson_type":"Практическое занятие","room":"109","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№14 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Дергаева С.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-17","end":"09:55:00","lesson_type":"Практическое занятие","room":"306","source_lesson_id":null,"start":"08:20:00","stream":"ВШЭУиП_№13 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Астахова Т.Н."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-17","end":"11:45:00","lesson_type":"Практическое занятие","room":"206","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№10 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Сафроненкова Е.Л."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-17","end":"11:45:00","lesson_type":"Практическое занятие","room":"418","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№12 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Жемчугова С.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-17","end":"11:45:00","lesson_type":"Практическое занятие","room":"110","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№9 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Вепрева Т.Б."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-17","end":"11:45:00","lesson_type":"Практическое занятие","room":"312","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№11 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Маслова М.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-17","end":"11:45:00","lesson_type":"Практическое занятие","room":"109","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№14 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Дергаева С.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-17","end":"11:45:00","lesson_type":"Практическое занятие","room":"306","source_lesson_id":null,"start":"10:10:00","stream":"ВШЭУиП_№13 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Астахова Т.Н."},{"address":null,"building":null,"date":"2026-12-17","end":"21:15:00","lesson_type":"Практическое занятие","room":"Дистанционное обучение ","source_lesson_id":null,"start":"19:40:00","stream":null,"subgroup":null,"subject":"Физическая культура и спорт","teacher":"Варенцова И.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-18","end":"09:55:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"История России","teacher":"Санковская О.М."},{"address":"наб. Северной Двины, д. 17","building":null,"date":"2026-12-18","end":"11:45:00","lesson_type":"Лабораторная работа","room":"1426","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":"171605_ЦК_02","subject":"Цифровая культура","teacher":"Павлова М.А."},{"address":"наб. Северной Двины, д. 17","building":null,"date":"2026-12-18","end":"11:45:00","lesson_type":"Лабораторная работа","room":"1415","source_lesson_id":null,"start":"10:10:00","stream":"171602_ЦК_01, 171605_ЦК_01","subgroup":null,"subject":"Цифровая культура","teacher":"Шутрова И.В."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-18","end":"17:50:00","lesson_type":"Зачет","room":"428","source_lesson_id":null,"start":"16:15:00","stream":"ИЯ_Немецкий_02","subgroup":null,"subject":"Иностранный язык","teacher":"Соколова М.Л."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-19","end":"09:55:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"История России","teacher":"Санковская О.М."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-19","end":"11:45:00","lesson_type":"Практическое занятие","room":"400","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-19","end":"13:35:00","lesson_type":"Практическое занятие","room":"400","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-21","end":"09:55:00","lesson_type":"Практическое занятие","room":"401","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-21","end":"16:05:00","lesson_type":"Практическое занятие","room":"405","source_lesson_id":null,"start":"14:30:00","stream":null,"subgroup":null,"subject":"Основы правовой и финансовой грамотности","teacher":"Черноудова М.Г."},{"address":"пр. Новгородский, 34","building":null,"date":"2026-12-21","end":"17:50:00","lesson_type":"Практическое занятие","room":"зал фитнеса \"Арктика\"","source_lesson_id":null,"start":"16:15:00","stream":null,"subgroup":null,"subject":"Прикладная физическая культура и спорт","teacher":"Нейман М.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-22","end":"11:45:00","lesson_type":"Зачет","room":"306","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":"171605_01","subject":"Информационные технологии в юридической деятельности","teacher":"Кузнецов С.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-22","end":"13:35:00","lesson_type":"Зачет","room":"306","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":"171605_02","subject":"Информационные технологии в юридической деятельности","teacher":"Плотников А.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-23","end":"11:45:00","lesson_type":"Практическое занятие","room":"204","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Новгородский, 34","building":null,"date":"2026-12-23","end":"17:50:00","lesson_type":"Практическое занятие","room":"зал фитнеса \"Арктика\"","source_lesson_id":null,"start":"16:15:00","stream":null,"subgroup":null,"subject":"Прикладная физическая культура и спорт","teacher":"Нейман М.А."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-24","end":"09:55:00","lesson_type":"Практическое занятие","room":"101","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-24","end":"11:45:00","lesson_type":"Практическое занятие","room":"101","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":null,"subject":"История государства и права России","teacher":"Шаляпин С.О."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-25","end":"09:55:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"История России","teacher":"Санковская О.М."},{"address":"наб. Северной Двины, д. 17","building":null,"date":"2026-12-25","end":"11:45:00","lesson_type":"Зачет","room":"1426","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":"171605_ЦК_02","subject":"Цифровая культура","teacher":"Павлова М.А."},{"address":"наб. Северной Двины, д. 17","building":null,"date":"2026-12-25","end":"11:45:00","lesson_type":"Зачет","room":"1415","source_lesson_id":null,"start":"10:10:00","stream":"171602_ЦК_01, 171605_ЦК_01","subgroup":null,"subject":"Цифровая культура","teacher":"Шутрова И.В."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-25","end":"16:05:00","lesson_type":"Зачет","room":"407","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№9 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Вепрева Т.Б."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-25","end":"16:05:00","lesson_type":"Зачет","room":"413","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№10 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Сафроненкова Е.Л."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-25","end":"16:05:00","lesson_type":"Зачет","room":"419","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№11 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Маслова М.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-25","end":"16:05:00","lesson_type":"Зачет","room":"421","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№12 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Жемчугова С.А."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-25","end":"16:05:00","lesson_type":"Зачет","room":"428","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№14 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Дергаева С.С."},{"address":"пр. Ломоносова, д. 4","building":null,"date":"2026-12-25","end":"16:05:00","lesson_type":"Зачет","room":"206","source_lesson_id":null,"start":"14:30:00","stream":"ВШЭУиП_№13 (н.э.)","subgroup":null,"subject":"Иностранный язык","teacher":"Астахова Т.Н."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-26","end":"09:55:00","lesson_type":"Практическое занятие","room":"301","source_lesson_id":null,"start":"08:20:00","stream":null,"subgroup":null,"subject":"История России","teacher":"Санковская О.М."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-26","end":"11:45:00","lesson_type":"Практическое занятие","room":"401","source_lesson_id":null,"start":"10:10:00","stream":null,"subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."},{"address":"пр. Ломоносова, д. 58","building":null,"date":"2026-12-26","end":"13:35:00","lesson_type":"Федеральный интернет-экзамен (ФЭПО)","room":"206","source_lesson_id":null,"start":"12:00:00","stream":null,"subgroup":null,"subject":"Теория государства и права","teacher":"Ершова И.В."}],"start":"2026-11-16"}]},"/api/v1/mirror/status":{"source_status":"unavailable","groups_total":1,"groups_ok":1,"groups_cached_total":1,"last_success":"2026-11-19T19:54:10+00:00","note":"Static frozen preview. No server-side synchronization."}};
 
 // Institution IDs from the official SAFU RUZ index; schedule data is only available for 171605.
 PARA_STATIC_DATA["/api/v1/institutions"] = [{"id": "4", "name": "Высшая школа социально-гуманитарных наук и международной коммуникации"}, {"id": "28", "name": "Высшая школа экономики, управления и права"}, {"id": "15", "name": "Высшая инженерная школа"}, {"id": "1", "name": "Высшая школа естественных наук и технологий"}, {"id": "3", "name": "Высшая школа информационных технологий и автоматизированных систем"}, {"id": "13", "name": "Высшая школа педагогики, психологии и физической культуры"}, {"id": "36", "name": "Высшая школа рыболовства и морских технологий"}, {"id": "12", "name": "Высшая школа энергетики, нефти и газа"}, {"id": "6", "name": "Гуманитарный институт (Северодвинск)"}, {"id": "35", "name": "Научный отдел филиала САФУ (Северодвинск)"}, {"id": "23", "name": "Технический колледж (Северодвинск)"}, {"id": "33", "name": "Управление подготовки и аттестации НПК"}, {"id": "26", "name": "Институт судостроения и морской арктической техники (Севмашвтуз)"}];
-// The public catalogue and independently verified per-group schedule files are loaded progressively.
+// Verified timetables are progressively published as separate JSON files.
+// The historical 171605 snapshot is used only when no newer verified copy exists.
 const PARA_CATALOG_URL='./catalog.json';
 let PARA_CATALOG_PROMISE=null;
 let PARA_CATALOG_READY=false;
@@ -74,18 +131,18 @@ async function ensureCatalog(){
  return PARA_CATALOG_PROMISE;
 }
 const PARA_SCHEDULE_IDS = new Set(['21096']);
-let PARA_SCHEDULE_INDEX_PROMISE=null;
+let PARA_SCHEDULE_INDEX_PROMISE = null;
 async function ensureScheduleIndex(){
  if(PARA_SCHEDULE_INDEX_PROMISE)return PARA_SCHEDULE_INDEX_PROMISE;
- PARA_SCHEDULE_INDEX_PROMISE=(async()=>{
+ PARA_SCHEDULE_INDEX_PROMISE = (async()=>{
    try{
      const r=await PARA_ORIGINAL_FETCH(new URL('./data/status.json',location.href),{cache:'no-store'});
      if(!r.ok)return false;
      const data=await r.json();
      if(!Array.isArray(data.cached_ids))return false;
-     for(const id of data.cached_ids)if(/^\d{1,12}$/.test(String(id)))PARA_SCHEDULE_IDS.add(String(id));
+     for(const id of data.cached_ids){if(/^\d{1,12}$/.test(String(id)))PARA_SCHEDULE_IDS.add(String(id))}
      return true;
-   }catch(e){return false;}
+   }catch(e){return false}
  })();
  return PARA_SCHEDULE_INDEX_PROMISE;
 }
@@ -105,7 +162,7 @@ window.fetch = async function(input,options) {
    if(path==='/api/v1/schedule'){
      const qs=new URLSearchParams((u.split('?')[1]||''));
      const requested=qs.get('group_id')||'';
-     if(window.PARA_SETUP_PAYLOAD&&String(window.PARA_SETUP_PAYLOAD.group_id)===requested)return new Response(JSON.stringify(window.PARA_SETUP_PAYLOAD),{status:200,headers:{'Content-Type':'application/json'}});
+     if(window.PARA_SETUP_PAYLOAD && String(window.PARA_SETUP_PAYLOAD.group_id)===requested) return new Response(JSON.stringify(window.PARA_SETUP_PAYLOAD),{status:200,headers:{'Content-Type':'application/json'}});
      if(/^\d{1,12}$/.test(requested)){
        try{
          const url=new URL('./data/schedules/'+requested+'.json',location.href);
@@ -117,12 +174,13 @@ window.fetch = async function(input,options) {
              return new Response(JSON.stringify(doc),{status:200,headers:{'Content-Type':'application/json'}});
            }
          }
-       }catch(e){/* Keep the last verified local copy on network failure. */}
+       }catch(e){/* Retain last verified local snapshot when Pages is unavailable. */}
      }
      if(requested==='21096'){
        return new Response(JSON.stringify(payload),{status:200,headers:{'Content-Type':'application/json'}});
      }
-     return new Response(JSON.stringify({group_id:requested,cached:false,source_status:'unavailable',last_success:null,periods:[]}),
+     return new Response(JSON.stringify({group_id:requested,cached:false,
+       source_status:'unavailable',last_success:null,periods:[]}),
        {status:200,headers:{'Content-Type':'application/json'}});
    }
    return new Response(JSON.stringify(payload),{status:200,headers:{'Content-Type':'application/json'}});
@@ -135,7 +193,7 @@ window.fetch = async function(input,options) {
 <section id="profile" class="screen"><header class="header"><strong class="logo">para.</strong><span class="wordmark">САФУ</span></header><div class="eyebrow">Настройки</div><h1>Профиль</h1><p class="sub">Аккаунт не требуется</p><div class="section"><div class="eyebrow">Учёба</div><div class="field"><label for="university">Университет</label><select id="university"><option value="САФУ">САФУ</option></select></div><div class="field"><label for="institutionInput">Высшая школа / институт</label><select id="institutionInput"><option value="">Все подразделения САФУ</option></select></div><div class="field"><label for="groupInput">Учебная группа</label><input id="groupInput" autocomplete="off" value="171605" placeholder="Например, 171605 или 1.5.15" aria-describedby="groupSearchHint"><div id="groupResults" class="group-results" aria-live="polite"></div><div class="cap" id="groupSearchHint">Введите номер группы. Расписание в этом просмотре доступно только для 171605.</div></div><p class="source-note">Источник данных: сохранённый снимок РУЗ группы 171605 от 19 ноября 2026 года. Автоматического обновления на сайте пока нет.<br><a id="institutionRuzLink" href="https://ruz.narfu.ru/" target="_blank" rel="noopener noreferrer">Список групп на сайте САФУ ↗</a></p><div class="field"><label>Подгруппы и языковые потоки по предметам</label><div id="courseStreams" class="course-streams"></div><div class="cap">Выбирай нужный поток отдельно для каждого предмета. Общие лекции остаются видны.</div></div><div class="field"><label for="vkInput">Ссылка на беседу ВКонтакте</label><input id="vkInput" placeholder="https://vk.com/..." inputmode="url"></div><button class="btn" id="saveStudy" style="margin-top:15px">Сохранить</button><div class="cap" id="savedMsg"></div></div><div class="section"><div class="eyebrow">Уведомления</div><div class="rowcard"><span class="inline">Напоминать о парах</span><input class="toggle" type="checkbox" id="reminders" checked></div><div class="field"><label for="minutes">За сколько минут</label><select id="minutes"><option value="10">10 минут</option><option value="20" selected>20 минут</option><option value="30">30 минут</option><option value="60">60 минут</option></select></div><div class="field"><label for="scope">Когда напоминать</label><select id="scope"><option value="first">Перед первой парой</option><option value="all">Перед каждой парой</option></select></div><div class="rowcard"><span class="inline">Отмены и переносы</span><input class="toggle" type="checkbox" id="changes" checked></div><div class="rowcard"><span class="inline">Изменение аудитории</span><input class="toggle" type="checkbox" id="rooms" checked></div><p class="small">Настройки сохраняются в браузере. Настоящие уведомления появятся после реализации мобильного приложения.</p></div><div class="section"><button class="linkrow" id="reset"><span>Сбросить настройки прототипа</span><span>↺</span></button></div></section>
 </main><nav class="bottom" aria-label="Разделы"><button data-tab="schedule" class="nav active"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg>Расписание</button><button data-tab="group" class="nav"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 20v-2a6 6 0 0 1 12 0v2M17 6a3 3 0 0 1 0 6M17 14a5 5 0 0 1 5 5v1"/></svg>Группа</button><button data-tab="profile" class="nav"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg>Профиль</button></nav></div><div class="modalback" id="modal"><div class="modal"><div class="row"><h2>Демоверсия PARA</h2><button class="iconbutton" id="closeModal">×</button></div><p class="small" id="modalText"></p><button class="btn" id="modalOk">Понятно</button></div></div>
 <script>
-'use strict';window.PARA_SETUP_DONE=(()=>{try{return localStorage.getItem('para_onboarding_complete_v1')==='1'&&!!JSON.parse(localStorage.getItem('para_editorial_v02')||'null')?.groupId}catch(e){return false}})();
+'use strict';window.PARA_SETUP_DONE = (()=>{try{return localStorage.getItem('para_onboarding_complete_v1')==='1' && !!JSON.parse(localStorage.getItem('para_editorial_v02')||'null')?.groupId}catch(e){return false}})();
 if(!window.PARA_SETUP_DONE)document.documentElement.classList.add('para-first');
 const S={tab:'schedule',selected:(new Date().getDay()+6)%7,week:0,offline:false,expanded:null,settings:{group:'171605',groupId:'21096',institutionId:'28',streams:{},subgroup:'all',vk:'',reminders:true,minutes:'20',scope:'first',changes:true,rooms:true}};
 try{const saved=JSON.parse(localStorage.getItem('para_editorial_v02'));if(saved&&typeof saved==='object')S.settings={...S.settings,...saved}}catch(e){}
@@ -176,7 +234,7 @@ const host=$('groupResults');
   if(ticket!==searchTicket)return;
   if(PARA_CATALOG_READY){$('groupSearchHint').textContent=`В каталоге САФУ: ${PARA_CATALOG_COUNT} групп.`;}
   host.innerHTML=matches.slice(0,15).map(g=>`<button class="group-option" type="button" data-pick-id="${esc(g.id)}" data-pick-group="${esc(g.number)}" data-pick-institution="${esc(g.institution_id)}"><span><strong>${esc(g.number)}</strong><br><span>${esc((g.program?g.program+' · ':'')+(g.institution||'САФУ'))}</span></span><span class="availability">${PARA_SCHEDULE_IDS.has(String(g.id))?'Расписание загружено':'Расписание пока недоступно'}</span></button>`).join('');
-  $('groupSearchHint').textContent=matches.length?`Найдено в каталоге САФУ: ${matches.length}. Выберите группу и нажмите «Сохранить».`:(PARA_CATALOG_READY?'Группа не найдена в каталоге САФУ. Номер можно ввести вручную, но расписание пока не загружено.':'Полный каталог временно недоступен. Попробуйте обновить страницу; номер можно ввести вручную.');
+  $('groupSearchHint').textContent=matches.length?`Найдено в каталоге САФУ: ${matches.length}. Выберите группу и нажмите «Сохранить».`:'Группа не найдена в доступном каталоге. Номер можно ввести вручную, но расписание пока не загружено.';
   host.querySelectorAll('[data-pick-group]').forEach(btn=>btn.addEventListener('click',()=>{$('groupInput').value=btn.dataset.pickGroup;$('groupInput').dataset.selectedId=btn.dataset.pickId;
     $('institutionInput').value=btn.dataset.pickInstitution;updateInstitutionLink();refreshSuggestions();$('saveStudy').focus()}));
 }
@@ -217,78 +275,252 @@ function mapLesson(l,i){
  if(!l.subgroup && l.stream && l.stream.split(',').map(x=>x.trim()).includes(S.settings.group))sub='all';
  return {id:l.source_lesson_id||`${l.date}/${l.start}/${i}`, date:l.date,start:String(l.start).slice(0,5),end:String(l.end).slice(0,5),name:l.subject,type:l.lesson_type||'Занятие',room:l.room||'не указана',building:l.building||l.address||'',teacher:l.teacher||'Преподаватель не указан',sub};
 }
-let PARA_SCHEDULE_REQUEST=0;
-// Only the most recent selection can change the schedule or its local cache.
 async function fetchSchedule(){
- const ticket=++PARA_SCHEDULE_REQUEST;
- const current=()=>ticket===PARA_SCHEDULE_REQUEST;
- const group=S.settings.group.trim();
- const selectedId=String(S.settings.groupId||'');
- const selectedInstitution=String(S.settings.institutionId||'');
- const keyFor=id=>'para_verified_'+String(id);
- const clear=()=>{
-   R.lessons=[];R.mode='demo';R.groupSourceId=null;
-   R.lastSuccess=null;R.sourceStatus='unavailable';
- };
- function cachedFor(id){
-   try{
-     const saved=JSON.parse(localStorage.getItem(keyFor(id))||'null');
-     // Legacy untagged caches may have been written during a group-switch race.
-     if(saved&&String(saved.groupId)===String(id)&&Array.isArray(saved.lessons)&&saved.lessons.length){
-       R.lessons=saved.lessons;R.mode='cached';R.groupSourceId=id;
-       R.lastSuccess=saved.lastSuccess;R.sourceStatus='unavailable';
-       return true;
-     }
-   }catch(e){}
-   return false;
- }
- function finish(){
-   if(!current())return;
-   if(R.mode!=='demo'){
-     S.week=0;S.selected=(new Date().getDay()+6)%7;
-   }
-   schedule();renderCourseStreams();
- }
- clear();schedule();
+ await ensureCatalog();
+ const group=S.settings.group.trim(); const key='para_verified_'+(S.settings.groupId||group);
  try{
-   await ensureCatalog();
-   if(!current())return;
-   const res=await fetch('/api/v1/groups?q='+encodeURIComponent(group)+'&limit=100',{cache:'no-store'});
-   if(!res.ok)throw Error('Group catalogue unavailable');
-   const groups=await res.json();
-   if(!current())return;
-   const match=groups.find(x=>x.number===group&&String(x.id)===selectedId)
-      ||groups.find(x=>x.number===group&&(!selectedInstitution||String(x.institution_id)===selectedInstitution));
-   if(!match){clear();finish();return}
-   const gid=String(match.id);
-   // Save verified group identity, never just a non-unique display number.
-   S.settings.groupId=gid;S.settings.institutionId=String(match.institution_id);
-   R.groupSourceId=gid;persist();
-   const sr=await fetch('/api/v1/schedule?group_id='+encodeURIComponent(gid),{cache:'no-store'});
-   if(!sr.ok)throw Error('Group schedule unavailable');
-   const data=await sr.json();
-   if(!current())return;
-   if(data&&String(data.group_id)===gid&&(!data.group_number||data.group_number===group)
-      &&data.cached===true&&Array.isArray(data.periods)){
-     const lessons=data.periods.flatMap(p=>Array.isArray(p.lessons)?p.lessons:[]);
-     if(lessons.length){
-       R.lessons=lessons.map(mapLesson);
-       R.mode='api';R.groupSourceId=gid;
-       R.sourceStatus=data.source_status||'cached';R.lastSuccess=data.last_success;
-       try{localStorage.setItem(keyFor(gid),JSON.stringify({
-         groupId:gid,lessons:R.lessons,lastSuccess:R.lastSuccess,sourceStatus:R.sourceStatus
-       }))}catch(e){}
-       finish();return;
-     }
-   }
-   if(!cachedFor(gid))clear();
- }catch(e){
-   if(!current())return;
-   const gid=String(S.settings.groupId||selectedId);
-   if(!cachedFor(gid))clear();
+  const res=await fetch(`/api/v1/groups?q=${encodeURIComponent(group)}&limit=100`,{cache:'no-store'});
+  if(!res.ok)throw Error('catalog request failed');
+  const groups=await res.json();const match=groups.find(x=>x.number===group && String(x.id)===String(S.settings.groupId))||groups.find(x=>x.number===group && (!S.settings.institutionId||String(x.institution_id)===String(S.settings.institutionId)));
+  if(!match){const local=JSON.parse(localStorage.getItem(key)||'null');if(local&&Array.isArray(local.lessons)&&local.lessons.length){R.lessons=local.lessons;R.lastSuccess=local.lastSuccess;R.sourceStatus='unavailable';R.mode='cached'}else{R.mode='demo';R.lessons=[]}schedule();return}
+  R.groupSourceId=match.id;S.settings.groupId=String(match.id);S.settings.institutionId=String(match.institution_id);persist();
+  const sr=await fetch(`/api/v1/schedule?group_id=${encodeURIComponent(match.id)}`,{cache:'no-store'});
+  if(!sr.ok)throw Error('schedule request failed');
+  const data=await sr.json();
+  if(!data.cached){const local=JSON.parse(localStorage.getItem(key)||'null');if(local&&Array.isArray(local.lessons)&&local.lessons.length){R.lessons=local.lessons;R.lastSuccess=local.lastSuccess;R.sourceStatus='unavailable';R.mode='cached'}else{R.mode='demo';R.lessons=[]}schedule();return}
+  R.lessons=(data.periods||[]).flatMap(p=>p.lessons||[]).map(mapLesson);
+  R.mode='api';R.sourceStatus=data.source_status;R.lastSuccess=data.last_success;
+  try{const statusResponse=await fetch('/api/v1/mirror/status',{cache:'no-store'});if(statusResponse.ok){const status=await statusResponse.json();R.sourceStatus=status.source_status||'unknown'}}catch(e){}
+  try{localStorage.setItem(key,JSON.stringify({lessons:R.lessons,lastSuccess:R.lastSuccess,sourceStatus:R.sourceStatus}))}catch(e){}
+ }catch(err){
+  try{const saved=JSON.parse(localStorage.getItem(key)); if(saved&&Array.isArray(saved.lessons)&&saved.lessons.length){R.lessons=saved.lessons;R.mode='cached';R.lastSuccess=saved.lastSuccess;R.sourceStatus='unavailable'}else{R.mode='demo';R.lessons=[]}}catch(e){R.mode='demo';R.lessons=[]}
  }
- finish();
+ if(R.mode!=='demo'){
+   const now=new Date();S.week=0;S.selected=(now.getDay()+6)%7;
+ }
+ schedule();
+ renderCourseStreams();
 }
 
-if(window.PARA_SETUP_DONE){loadInstitutions();tab('schedule');fetchSchedule()}
-</script><script src="./onboarding.js?v=21"></script></body></html>
+if(window.PARA_SETUP_DONE){loadInstitutions();tab('schedule');fetchSchedule();}
+</script><script id="para-onboarding-script">
+/* PARA onboarding: first launch → group → subject-level streams. No account required. */
+(() => {
+  'use strict';
+  const key = 'para_onboarding_complete_v1';
+  const root = document.createElement('div');
+  root.id = 'para-setup';
+  root.className = 'para-setup';
+  root.hidden = true;
+  root.innerHTML = `
+    <div class="setup-wrap">
+      <header class="setup-top"><span class="setup-logo">para.</span><span id="setupStep" class="setup-step">01 / 02</span></header>
+      <div class="setup-main">
+        <section id="setupChoose">
+          <h1>Твои пары.<br>Без лишнего.</h1>
+          <p class="setup-desc">Выбери группу и потоки один раз. Потом PARA сразу открывает твои пары.</p>
+          <div class="setup-field"><label class="setup-label" for="setupUniversity">Университет</label><div class="select-shell"><select class="setup-select" id="setupUniversity"><option value="safu">САФУ</option></select></div></div>
+          <div class="setup-field"><label class="setup-label" for="setupSchool">Высшая школа / институт</label><div class="select-shell"><select class="setup-select" id="setupSchool"><option value="">Все подразделения САФУ</option></select></div></div>
+          <div class="setup-field"><label class="setup-label" for="setupSearch">Номер группы</label><input class="setup-input" id="setupSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Например, 171605 или 1.5.15"><p class="setup-micro" id="setupCount">Загружаем список групп…</p></div>
+          <div id="setupResults" class="setup-results" aria-live="polite"></div>
+          <p id="setupSelection" class="setup-status" role="status"></p>
+        </section>
+        <section id="setupStreamsStep" hidden>
+          <h1>Только твои<br>занятия.</h1>
+          <p class="setup-desc">Выбери свои подгруппы и языковые потоки — не придётся видеть чужие пары.</p>
+          <div id="setupChoice" class="setup-choice"></div>
+          <div id="setupStreams" aria-live="polite"><p class="setup-streams-empty">Получаем доступные потоки…</p></div>
+          <p class="setup-date-note">Настройки останутся на этом устройстве. Их можно изменить позже.</p>
+        </section>
+      </div>
+      <footer class="setup-actions"><button type="button" id="setupPrimary" class="setup-primary" disabled>Продолжить</button><button type="button" id="setupBack" class="setup-back" hidden>← Назад к выбору группы</button></footer>
+    </div>`;
+  document.body.appendChild(root);
+  const el = id => document.getElementById(id);
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const chosen = {group:null,stage:1,courseSelections:{},requestSeq:0,groups:[],institutions:[]};
+  const selectedGroups = () => PARA_STATIC_DATA['/api/v1/groups'] || [];
+  const selectedInstitutions = () => PARA_STATIC_DATA['/api/v1/institutions'] || [];
+
+  function showStep(step) {
+    chosen.stage=step;
+    el('setupChoose').hidden=step!==1;
+    el('setupStreamsStep').hidden=step!==2;
+    el('setupStep').textContent=step===1?'01 / 02':'02 / 02';
+    el('setupPrimary').textContent=step===1?'Продолжить':'Открыть расписание';
+    el('setupPrimary').disabled=step===2 || !chosen.group;
+    el('setupBack').hidden=step!==2;
+    window.scrollTo(0,0);
+  }
+  function renderGroups() {
+    const filter=el('setupSchool').value;
+    const q=el('setupSearch').value.trim().toLocaleLowerCase('ru');
+    const all=chosen.groups;
+    const matching=all.filter(g=>(!filter||String(g.institution_id)===filter) &&
+      (!q || (String(g.number)+' '+String(g.program||'')).toLocaleLowerCase('ru').includes(q)));
+    matching.sort((a,b)=>{
+      const score=g=>q ? (String(g.number).toLocaleLowerCase('ru')===q?0:String(g.number).toLocaleLowerCase('ru').startsWith(q)?1:2) : 1;
+      return score(a)-score(b) || String(a.number).localeCompare(String(b.number),'ru',{numeric:true});
+    });
+    const cap=12;
+    // Keep the landing clean: do not render a random alphabetic batch before search.
+    const show=Boolean(q || filter);
+    el('setupCount').textContent=!all.length
+      ? 'Каталог временно недоступен. Обнови страницу.'
+      : !show ? `${all.length} групп САФУ. Введи номер, чтобы найти свою.`
+      : `${matching.length} из ${all.length} групп найдено. ${matching.length>cap ? 'Уточни номер в поиске.' : ''}`;
+    el('setupResults').innerHTML=(show ? matching.slice(0,cap) : []).map(g=>{
+      const isSelected=chosen.group && String(g.id)===String(chosen.group.id);
+      const ready=PARA_SCHEDULE_IDS.has(String(g.id));
+      return `<button type="button" class="setup-row" data-group-id="${escapeHtml(g.id)}" aria-pressed="${Boolean(isSelected)}"><span><span class="setup-number">${escapeHtml(g.number)}</span><span class="setup-program">${escapeHtml(g.program || g.institution || 'Учебная группа')}</span></span><span class="setup-ready">${ready?'Есть расписание':'Пока нет данных'}</span></button>`;
+    }).join('');
+    if(!matching.length && all.length)el('setupResults').innerHTML='<p class="setup-streams-empty">Ничего не найдено. Проверь номер группы или выбери «Все подразделения».</p>';
+    el('setupResults').querySelectorAll('[data-group-id]').forEach(button=>{
+      button.addEventListener('click',()=>{
+        chosen.group=all.find(g=>String(g.id)===button.dataset.groupId)||null;
+        if(!chosen.group)return;
+        el('setupSearch').value=String(chosen.group.number);
+        el('setupSchool').value=String(chosen.group.institution_id);
+        el('setupSelection').textContent=`Выбрана группа ${chosen.group.number}`;
+        el('setupPrimary').disabled=false;
+        renderGroups();
+      });
+    });
+  }
+  function renderSchools() {
+    const current=el('setupSchool').value;
+    el('setupSchool').innerHTML='<option value="">Все подразделения САФУ</option>'+chosen.institutions.map(i=>
+      `<option value="${escapeHtml(i.id)}">${escapeHtml(i.name)}</option>`).join('');
+    el('setupSchool').value=current;
+  }
+  async function loadCatalogue() {
+    const indexLookup=ensureScheduleIndex();
+    await ensureCatalog();
+    chosen.groups=selectedGroups();
+    chosen.institutions=selectedInstitutions();
+    renderSchools();
+    renderGroups();
+    indexLookup.then(()=>renderGroups()).catch(()=>{});
+  }
+  async function loadVariants(group) {
+    const seq=++chosen.requestSeq;
+    const container=el('setupStreams');
+    chosen.courseSelections={};
+    container.innerHTML='<p class="setup-streams-empty">Проверяем расписание и потоки…</p>';
+    el('setupChoice').innerHTML=`<strong>${escapeHtml(group.number)}</strong><div>${escapeHtml(group.program||group.institution||'САФУ')}</div>`;
+    const gid=String(group.id);
+    window.PARA_SETUP_PAYLOAD=null;
+    let doc=null;
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(()=>controller.abort(),7500);
+      try {
+        const response=await PARA_ORIGINAL_FETCH(new URL('./data/schedules/'+encodeURIComponent(gid)+'.json',location.href),{signal:controller.signal,cache:'default'});
+        if(response.ok)doc=await response.json();
+      } finally { clearTimeout(timeout); }
+      if(doc && (String(doc.group_id)!==gid || doc.group_number && doc.group_number!==group.number || !Array.isArray(doc.periods)))doc=null;
+    }catch(_){doc=null;}
+    if(seq!==chosen.requestSeq)return;
+    if(!doc && gid==='21096')doc=PARA_STATIC_DATA['/api/v1/schedule'];
+    let lessons=Array.isArray(doc?.periods) ? doc.periods.flatMap(p=>Array.isArray(p.lessons)?p.lessons:[]) : [];
+    if(!lessons.length){
+      container.innerHTML='<p class="setup-streams-empty">Для этой группы пока нет сохранённых занятий. Потоки появятся после загрузки расписания. Группу всё равно можно сохранить. Пары появятся после загрузки данных.</p>';
+      el('setupPrimary').disabled=false;
+      return;
+    }
+    window.PARA_SETUP_PAYLOAD=doc;
+    const subjects=new Map();
+    for(const lesson of lessons){
+      const raw=lesson.subgroup||lesson.stream;
+      if(!raw)continue;
+      // Shared lectures explicitly listing this group must remain visible in all variants.
+      if(!lesson.subgroup && lesson.stream && lesson.stream.split(',').map(s=>s.trim()).includes(group.number))continue;
+      const title=String(lesson.subject||'Дисциплина').trim();
+      const values=subjects.get(title)||new Set();values.add(String(raw));subjects.set(title,values);
+    }
+    const options=[...subjects].filter(([_,values])=>values.size>1).sort((a,b)=>a[0].localeCompare(b[0],'ru'));
+    if(!options.length){
+      container.innerHTML='<p class="setup-streams-empty">Разделения на несколько потоков для этой группы не обнаружено. Продолжай — можно сразу смотреть пары.</p>';
+      el('setupPrimary').disabled=false;
+      return;
+    }
+    container.innerHTML=options.map(([subject,values],i)=>
+      `<div class="setup-stream"><label class="setup-label" for="setup-stream-${i}">${escapeHtml(subject)}</label><select id="setup-stream-${i}" data-course="${escapeHtml(subject)}"><option value="all">Все потоки</option>${[...values].sort((a,b)=>a.localeCompare(b,'ru')).map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('')}</select></div>`).join('');
+    for(const select of container.querySelectorAll('[data-course]')){
+      const existing=S.settings.groupId===gid?S.settings.streams?.[select.dataset.course]:null;
+      if(existing && [...select.options].some(x=>x.value===existing))select.value=existing;
+      select.addEventListener('change',()=>{chosen.courseSelections[select.dataset.course]=select.value;});
+    }
+    el('setupPrimary').disabled=false;
+  }
+  async function complete() {
+    const group=chosen.group;
+    if(!group)return;
+    const newId=String(group.id);
+    const oldId=String(S.settings.groupId||'');
+    S.settings.group=String(group.number);
+    S.settings.groupId=newId;
+    S.settings.institutionId=String(group.institution_id);
+    if(oldId!==newId){
+      // Never show the previous group's lessons while the next schedule loads.
+      S.settings.streams={};
+      R.mode='demo'; R.lessons=[]; R.groupSourceId=null;
+      R.lastSuccess=null; R.sourceStatus='unknown';
+    }
+    for(const sel of el('setupStreams').querySelectorAll('[data-course]')){
+      S.settings.streams[sel.dataset.course]=sel.value;
+    }
+    try{
+      localStorage.setItem('para_editorial_v02',JSON.stringify(S.settings));
+      localStorage.setItem(key,'1');
+    }catch(_){/* Continue in session if storage is disabled. */}
+    document.documentElement.classList.remove('para-first');
+    root.hidden=true;
+    document.querySelector('.shell').style.display='';
+    S.week=0;S.expanded=null;
+    tab('schedule');
+    // The main client validates the selected group's id and renders only that group's lessons.
+    await fetchSchedule();
+    renderCourseStreams();
+  }
+  el('setupSearch').addEventListener('input',()=>{
+    if(chosen.group && chosen.group.number!==el('setupSearch').value.trim()){
+      chosen.group=null; el('setupPrimary').disabled=true;el('setupSelection').textContent='';
+    }
+    renderGroups();
+  });
+  el('setupSchool').addEventListener('change',()=>{
+    if(chosen.group && String(chosen.group.institution_id)!==el('setupSchool').value){chosen.group=null;el('setupPrimary').disabled=true;el('setupSelection').textContent='';}
+    renderGroups();
+  });
+  el('setupPrimary').addEventListener('click',async()=>{
+    if(chosen.stage===1){
+      if(!chosen.group)return;
+      showStep(2);
+      await loadVariants(chosen.group);
+    }else await complete();
+  });
+  el('setupBack').addEventListener('click',()=>{
+    ++chosen.requestSeq;
+    showStep(1);
+  });
+  async function open() {
+    ++chosen.requestSeq;
+    chosen.group=null;
+    chosen.courseSelections={};
+    window.PARA_SETUP_PAYLOAD=null;
+    root.hidden=false;
+    document.documentElement.classList.add('para-first');
+    document.querySelector('.shell').style.display='none';
+    showStep(1);
+    el('setupSearch').value='';
+    el('setupSchool').value='';
+    el('setupSelection').textContent='';
+    await loadCatalogue();
+    el('setupSearch').focus({preventScroll:true});
+  }
+  window.paraOpenOnboarding=open;
+  if(!window.PARA_SETUP_DONE)open();
+})();
+
+</script></body></html>
