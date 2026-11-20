@@ -72,11 +72,13 @@ jobs:
           assert 'height:100dvh' in mobile
           assert 'overflow-y:auto' in mobile
           assert 'position:relative' in mobile
-          assert 'padding-bottom:70px' in mobile
+          assert 'padding-bottom:88px' in mobile
           assert 'id="studyDetails">' in html
           assert 'id="studyDetails" open' not in html
           assert "scroller.scrollTop=0" in html
           assert "details.open=true" in html
+          assert 'font-size:16px!important' in mobile
+          assert '-webkit-text-size-adjust:100%' in mobile
           assert "obBoot()" not in html
           assert "function drawLanguages()" in js
           assert "function drawSubgroups()" in js
