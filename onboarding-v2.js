@@ -61,7 +61,7 @@ function bindSchools(){frame.querySelectorAll('[data-school]').forEach(function(
 async function loadSchools(){
  var epoch=P.screenSeq;
  try{
-  if(typeof ensureCatalog==='function')await ensureCatalog();
+  if(typeof ensureCatalog==='function'&&!(await ensureCatalog()))throw Error('Full RUZ catalogue unavailable');
   var r=await fetch('/api/v1/institutions',{cache:'no-store'});if(!r.ok)throw Error('catalog unavailable');
   var list=await r.json();if(!Array.isArray(list))throw Error('invalid catalog');
   P.schools=list;
