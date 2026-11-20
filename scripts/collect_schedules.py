@@ -1,8 +1,11 @@
-"""PARA: bounded, incremental SAFU timetable publisher.
-Only complete positive responses replace cached group JSON; no mass crawling.
+"""PARA: independently verified official SAFU timetable publisher.
+A rate-limited parallel full sweep checks all groups; only validated positive
+lessons replace existing snapshots. The small VPS does not crawl RUZ.
 """
 from __future__ import annotations
 import argparse, json, os, re, time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
 from datetime import date, datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
@@ -277,10 +280,136 @@ def collect(root,*,get=get_page,nap=time.sleep,limit=12,pause=1.6,clock=stamp):
     write(root/"data"/"status.json",status)
     return status
 
+
+def collect_all(root, *, get=get_page, nap=time.sleep, clock=stamp, workers=3, min_interval=0.9):
+    """Run a complete rate-limited pass from GitHub, never on the VPS.
+
+    Three requests may be in flight, but starts are globally staggered to
+    avoid bursts. Worker threads only download/parse; one coordinator commits
+    validated snapshots. A bad response cannot delete a saved timetable.
+    """
+    if not 1 <= workers <= 3 or not 0.5 <= min_interval <= 10:
+        raise ValueError("Unsafe full-scan concurrency or upstream rate")
+    catalog = read(root / "catalog.json", {}) or {}
+    if not isinstance(catalog, dict):
+        raise ValueError("Invalid official catalogue")
+    group_count = len(catalog.get("groups", []))
+    batch, _, total = selected(catalog, 0, group_count)
+    if len(batch) != total or total < 150:
+        raise ValueError("Cannot verify complete university group catalogue")
+
+    scan_started_at = clock()
+    started = time.monotonic()
+    next_at = [started]
+    pacing = Lock()
+
+    def fetch_one(group):
+        # Allocate a non-overlapping request start slot under a short lock.
+        # Never sleep while holding it: other workers can reserve later slots.
+        with pacing:
+            moment = time.monotonic()
+            slot = max(moment, next_at[0])
+            next_at[0] = slot + min_interval
+        wait = slot - time.monotonic()
+        if wait > 0:
+            nap(wait)
+        try:
+            raw = get(str(group["id"]))
+            if verified_empty_window(raw, group["number"]):
+                return group, "empty", None, None
+            return group, "ok", parse(raw, group["number"]), None
+        except (OSError, ValueError, RuntimeError) as exc:
+            return group, "failed", None, type(exc).__name__ + ": " + str(exc)[:120]
+
+    state = read(root / "data" / "sync_state.json", {}) or {}
+    if not isinstance(state, dict):
+        state = {}
+    failures = {}
+    report = {
+        "source": BASE,
+        "scan_started_at": scan_started_at,
+        "groups_total": total,
+        "groups_attempted": total,
+        "groups_completed": 0,
+        "groups_ok": 0,
+        "groups_empty": 0,
+        "groups_failed": 0,
+        "groups_changed": 0,
+        "errors": [],
+        "full_refresh": True,
+        "scan_workers": workers,
+    }
+    # Keep the response inventory bounded: every failure ID is in
+    # sync_state.json; status.json carries only a small diagnostic sample.
+    with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="para-ruz") as executor:
+        tasks = [executor.submit(fetch_one, group) for group in batch]
+        for future in as_completed(tasks):
+            group, outcome, parsed, error = future.result()
+            gid = str(group["id"])
+            if outcome == "ok":
+                try:
+                    changed = store(root / "data", group, parsed, clock())
+                    report["groups_ok"] += 1
+                    report["groups_changed"] += int(changed)
+                    print("OK", group["number"], gid, len(parsed["lessons"]), flush=True)
+                except (OSError, ValueError, RuntimeError) as exc:
+                    outcome = "failed"
+                    error = type(exc).__name__ + ": " + str(exc)[:120]
+            if outcome == "empty":
+                report["groups_empty"] += 1
+                print("EMPTY", group["number"], gid, flush=True)
+            elif outcome == "failed":
+                report["groups_failed"] += 1
+                failures[gid] = {"attempts": 1, "last_failed_at": clock()}
+                if len(report["errors"]) < 25:
+                    report["errors"].append({"id": gid, "group": group["number"], "error": error})
+                print("FAILED", group["number"], gid, error, flush=True)
+            report["groups_completed"] += 1
+            if report["groups_completed"] % 50 == 0:
+                print(
+                    "PROGRESS", report["groups_completed"], "/", total,
+                    "ok", report["groups_ok"], "empty", report["groups_empty"],
+                    "failed", report["groups_failed"], flush=True,
+                )
+
+    report["checked_at"] = clock()
+    report["scan_duration_seconds"] = round(time.monotonic() - started, 2)
+    report["retry_pending"] = report["groups_failed"]
+    report["retry_exhausted"] = 0
+    report["source_status"] = (
+        "degraded" if report["groups_failed"] > max(5, total // 10) else "checked"
+    )
+    if report["groups_ok"] + report["groups_empty"] + report["groups_failed"] != total:
+        raise RuntimeError("Incomplete scan accounting; refusing publication")
+
+    snapshots = root / "data" / "schedules"
+    ids = sorted(p.stem for p in snapshots.glob("*.json") if p.stem.isdecimal()) if snapshots.exists() else []
+    report["cached_ids"] = ids
+    report["groups_cached_total"] = len(ids)
+
+    # Never erase the current status on a total upstream outage. The job
+    # must fail and leave previously published GitHub files untouched.
+    if report["groups_ok"] == 0 and report["groups_failed"] > max(5, total // 10):
+        raise RuntimeError("RUZ appears unavailable; retained all last verified snapshots")
+
+    state.update({
+        "cursor": 0, "last_run": report["checked_at"],
+        "last_full_scan": report["checked_at"], "failures": failures,
+    })
+    write(root / "data" / "sync_state.json", state)
+    write(root / "data" / "status.json", report)
+    return report
+
+
 if __name__=="__main__":
     ap=argparse.ArgumentParser()
     ap.add_argument("--root",type=Path,default=Path("."))
     ap.add_argument("--limit",type=int,default=12)
     ap.add_argument("--pause",type=float,default=1.6)
+    ap.add_argument("--all",action="store_true",help="Safely scan all official groups with global upstream pacing")
+    ap.add_argument("--workers",type=int,default=3)
+    ap.add_argument("--interval",type=float,default=0.9,help="Minimum seconds between upstream request starts")
     args=ap.parse_args()
-    print(json.dumps(collect(args.root,limit=args.limit,pause=args.pause),ensure_ascii=False,indent=2))
+    report=(collect_all(args.root,workers=args.workers,min_interval=args.interval)
+            if args.all else collect(args.root,limit=args.limit,pause=args.pause))
+    print(json.dumps(report,ensure_ascii=False,indent=2))
