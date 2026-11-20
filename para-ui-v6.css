@@ -389,3 +389,47 @@ body .shell .nav svg{width:18px;height:18px;flex:0 0 auto}
   #onboard .p2-pill-label{font-size:13px}
   #onboard .p2-pill-teacher{font-size:11px}
 }
+
+
+/* PARA brand intro: intentional wipe, no raster blur or scaling. */
+#onboard .p2-splash .p2-big-logo{
+  display:block;
+  width:min(82vw,350px);
+  max-width:100%;
+  height:auto;
+  aspect-ratio:796 / 190;
+  object-fit:contain;
+  image-rendering:auto;
+  filter:none;
+  transform-origin:center center;
+  animation:para-wordmark-reveal 1.17s cubic-bezier(.22,.8,.24,1) both;
+  will-change:clip-path,opacity;
+}
+@keyframes para-wordmark-reveal{
+  0%{clip-path:inset(0 100% 0 0);opacity:0;transform:translateY(7px)}
+  18%{opacity:1}
+  76%{clip-path:inset(0 0 0 0);transform:translateY(0)}
+  100%{clip-path:inset(0 0 0 0);opacity:1;transform:none}
+}
+#onboard .p2-splash.p2-intro-leave{
+  opacity:0;
+  transition:opacity 230ms ease-out;
+}
+#onboard.p2-intro-out{
+  opacity:0;
+  transition:opacity 350ms ease-out;
+}
+body:has(#onboard.p2-intro-out) .shell{
+  display:flex!important;
+}
+@media(prefers-reduced-motion:reduce){
+  #onboard .p2-splash .p2-big-logo{
+    animation:none!important;
+    clip-path:none!important;
+    opacity:1!important;
+    transform:none!important;
+    will-change:auto;
+  }
+  #onboard .p2-splash.p2-intro-leave,
+  #onboard.p2-intro-out{transition:none!important}
+}
