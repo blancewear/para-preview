@@ -77,5 +77,57 @@ class Safety(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"Incomplete source"):
                 collector.store(root,group,parsed,"later")
 
+    def test_failed_group_retried_after_cooldown(self):
+        groups=[{"id":str(21000+i),"number":str(100000+i),"institution_id":"28"} for i in range(160)]
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            collector.write(root/"catalog.json",{"groups":groups})
+            calls={}
+            def get(gid):
+                calls[gid]=calls.get(gid,0)+1
+                if gid=="21000" and calls[gid]==1:
+                    raise ValueError("temporary upstream error")
+                return sample(groups[int(gid)-21000]["number"])
+            def run(at):
+                return collector.collect(root,get=get,nap=lambda _:None,limit=4,pause=1,clock=lambda:at)
+            initial=run("2026-11-20T00:00:00+00:00")
+            self.assertEqual((initial["groups_ok"],initial["groups_failed"]),(3,1))
+            state=collector.read(root/"data"/"sync_state.json")
+            self.assertEqual(state["cursor"],4)
+            self.assertEqual(state["failures"]["21000"]["attempts"],1)
+            too_soon=run("2026-11-20T02:00:00+00:00")
+            self.assertEqual(too_soon["retried_groups"],0)
+            self.assertEqual(calls["21000"],1)
+            self.assertEqual(collector.read(root/"data"/"sync_state.json")["cursor"],8)
+            later=run("2026-11-20T07:00:00+00:00")
+            self.assertEqual(later["retried_groups"],1)
+            self.assertEqual((later["groups_ok"],later["groups_failed"]),(4,0))
+            self.assertEqual(calls["21000"],2)
+            state=collector.read(root/"data"/"sync_state.json")
+            self.assertEqual(state["cursor"],11)
+            self.assertNotIn("21000",state["failures"])
+            self.assertEqual(later["retry_pending"],0)
+
+    def test_retry_cap_never_blocks_new_groups(self):
+        groups=[{"id":str(21000+i),"number":str(100000+i),"institution_id":"28"} for i in range(160)]
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            collector.write(root/"catalog.json",{"groups":groups})
+            calls={}
+            def get(gid):
+                calls[gid]=calls.get(gid,0)+1
+                if gid=="21000": raise ValueError("no published timetable")
+                return sample(groups[int(gid)-21000]["number"])
+            def run(at):
+                return collector.collect(root,get=get,nap=lambda _:None,limit=4,pause=1,clock=lambda:at)
+            run("2026-11-20T00:00:00Z")
+            a=run("2026-11-20T07:00:00Z")
+            b=run("2026-11-20T14:00:00Z")
+            c=run("2026-11-20T21:00:00Z")
+            self.assertEqual((a["retried_groups"],b["retried_groups"],c["retried_groups"]),(1,1,0))
+            self.assertEqual(calls["21000"],3)
+            self.assertEqual(collector.read(root/"data"/"sync_state.json")["failures"]["21000"]["attempts"],3)
+            self.assertEqual(c["retry_exhausted"],1)
+
 if __name__=="__main__":
     unittest.main()
