@@ -5,6 +5,8 @@ on:
   push:
     paths:
       - 'index.html'
+      - 'onboarding.js'
+      - 'onboarding.css'
       - 'catalog.json'
       - 'data/**'
       - 'tests/test_frontend.cjs'
@@ -12,6 +14,8 @@ on:
   pull_request:
     paths:
       - 'index.html'
+      - 'onboarding.js'
+      - 'onboarding.css'
       - 'catalog.json'
       - 'data/**'
       - 'tests/test_frontend.cjs'
