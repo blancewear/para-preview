@@ -39,46 +39,31 @@ jobs:
           assert "height:100dvh" in css
           assert "p2-count" not in js
           assert "p2-kicker" not in js
-          app = Path("app-shell-v3.css").read_text()
-          assert 'app-shell-v3.css?v=2' in html
+          app = Path("para-ui-v6.css").read_text()
+          assert 'para-ui-v6.css?v=1' in html
+          assert 'app-shell-v3.css?v=2' not in html
+          assert 'mobile-layout-v5.css?v=1' not in html
+          assert 'height:100dvh' in app
+          assert 'max-width:var(--para-width)' in app
+          assert 'overflow-x:hidden' in app
+          assert 'grid-template-columns:repeat(3,minmax(0,1fr))' in app
+          assert 'position:relative;left:auto;right:auto;bottom:auto;transform:none' in app
           assert 'id="profileGroupNumber"' in html
           assert 'id="editStudy"' in html
           assert 'id="saveVK"' in html
           assert 'id="saveStudy"' in html
-          assert 'id="fill"' in html
-          assert 'id="users"' in html
-          assert 'id="reminders"' in html
-          assert 'id="changes"' in html
-          assert 'id="rooms"' in html
-          assert 'id="minutes"' in html
-          assert 'id="scope"' in html
-          assert 'id="groupResults"' in html
-          assert 'id="institutionInput"' in html
-          assert 'id="institutionRuzLink"' in html
-          assert 'id="vkInput"' in html
-          assert 'id="saveVK"' in html
-          assert 'id="reset"' in html
-          assert 'Бот для домашних заданий ВК' in html
-          assert 'Учебные материалы группы' in html
-          assert 'Журнал старосты' in html
-          assert 'function refreshSuggestions()' in html
-          assert 'function loadInstitutions()' in html
+          for id in ("fill", "users", "reminders", "changes", "rooms", "minutes", "scope",
+                     "groupResults", "institutionInput", "institutionRuzLink",
+                     "vkInput", "saveVK", "reset"):
+              assert f'id="{id}"' in html
+          for label in ("Бот для домашних заданий ВК","Учебные материалы группы","Журнал старосты"):
+              assert label in html
+          assert "function refreshSuggestions()" in html
+          assert "function loadInstitutions()" in html
           assert "window.paraOpenOnboarding=reopen" in js
           assert "function schedule()" in html
           assert "function profile()" in html
           assert ".clean-row" in app and ".lesson" in app
-          mobile = Path("mobile-layout-v5.css").read_text()
-          assert 'mobile-layout-v5.css?v=1' in html
-          assert 'height:100dvh' in mobile
-          assert 'overflow-y:auto' in mobile
-          assert 'position:relative' in mobile
-          assert 'padding-bottom:88px' in mobile
-          assert 'id="studyDetails">' in html
-          assert 'id="studyDetails" open' not in html
-          assert "scroller.scrollTop=0" in html
-          assert "details.open=true" in html
-          assert 'font-size:16px!important' in mobile
-          assert '-webkit-text-size-adjust:100%' in mobile
           assert "obBoot()" not in html
           assert "function drawLanguages()" in js
           assert "function drawSubgroups()" in js
