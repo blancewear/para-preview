@@ -113,10 +113,12 @@ async function ensureCatalog(){
    }
    return false;
  })();
- return PARA_CATALOG_PROMISE;
+ try{return await PARA_CATALOG_PROMISE}
+ finally{if(!PARA_CATALOG_READY)PARA_CATALOG_PROMISE=null}
 }
 const PARA_SCHEDULE_IDS = new Set(['21096']);
 let PARA_SCHEDULE_INDEX_PROMISE=null;
+let PARA_SCHEDULE_INDEX_READY=false;
 async function ensureScheduleIndex(){
  if(PARA_SCHEDULE_INDEX_PROMISE)return PARA_SCHEDULE_INDEX_PROMISE;
  PARA_SCHEDULE_INDEX_PROMISE=(async()=>{
@@ -126,10 +128,12 @@ async function ensureScheduleIndex(){
      const data=await r.json();
      if(!Array.isArray(data.cached_ids))return false;
      for(const id of data.cached_ids)if(/^\d{1,12}$/.test(String(id)))PARA_SCHEDULE_IDS.add(String(id));
+     PARA_SCHEDULE_INDEX_READY=true;
      return true;
    }catch(e){return false;}
  })();
- return PARA_SCHEDULE_INDEX_PROMISE;
+ try{return await PARA_SCHEDULE_INDEX_PROMISE}
+ finally{if(!PARA_SCHEDULE_INDEX_READY)PARA_SCHEDULE_INDEX_PROMISE=null}
 }
 const PARA_ORIGINAL_FETCH = window.fetch.bind(window);
 window.fetch = async function(input,options) {
