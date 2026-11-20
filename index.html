@@ -276,8 +276,26 @@ function scheduleEmptyState(){
  if(R.mode==='demo')return '<div class="empty">Расписание группы '+esc(S.settings.group)+' ещё не загружено в PARA.<div class="small">'+official+'</div></div>';
  const day=localDate(dateOf(S.selected));
  const covered=Array.isArray(R.periods)&&R.periods.some(p=>p&&typeof p.start==='string'&&typeof p.end==='string'&&p.start<=day&&day<=p.end);
- if(!covered)return '<div class="empty">На выбранную неделю пока нет проверенных данных.<div class="small">'+official+'</div></div>';
+ if(!covered){
+   const validDates=R.lessons.map(l=>String(l.date||'')).filter(s=>/^\d{4}-\d{2}-\d{2}$/.test(s)).sort();
+   const latest=validDates.length?validDates[validDates.length-1]:null;
+   const available=latest?'<div class="small">Последнее сохранённое занятие: '+esc(fmt.format(new Date(latest+'T12:00:00')))+'</div><button type="button" class="clean-row" id="showSavedWeek"><span>Открыть сохранённую неделю</span><span aria-hidden="true">→</span></button>':'';
+   return '<div class="empty">На выбранную неделю пока нет проверенных данных.'+available+'<div class="small">'+official+'</div></div>';
+ }
+
  return '<div class="empty">Пар нет</div>';
+}
+function jumpToSavedWeek(){
+ const available=R.lessons.map(l=>String(l.date||'')).filter(s=>/^\d{4}-\d{2}-\d{2}$/.test(s)).sort();
+ if(!available.length)return;
+ const target=new Date(available[available.length-1]+'T12:00:00');
+ if(Number.isNaN(target.getTime()))return;
+ const monday=new Date(target);monday.setDate(monday.getDate()-(monday.getDay()+6)%7);
+ const weeks=Math.round((monday.getTime()-R.monday.getTime())/(7*86400000));
+ S.week=Math.max(-20,Math.min(20,weeks));
+ S.selected=(target.getDay()+6)%7;
+ S.expanded=null;
+ schedule();
 }
 function schedule(){
  const d=dateOf(S.selected),a=dateOf(0),b=dateOf(6),list=lessonsFor(S.selected);
@@ -292,6 +310,7 @@ function schedule(){
    const detail=expanded?[l.type,l.teacher,l.building,l.sub==='all'?'':l.sub].filter(Boolean).map(x=>'<span>'+esc(x)+'</span>').join('<br>'):'';
    return '<button type="button" class="lesson" data-lesson="'+esc(l.id)+'" aria-expanded="'+expanded+'"><span><div class="time">'+esc(l.start)+'</div><div class="end">'+esc(l.end)+'</div></span><span><span class="subject">'+esc(l.name)+'</span>'+room+(expanded?'<span class="extra">'+detail+'</span>':'')+'</span><span class="chev" aria-hidden="true">'+(expanded?'⌃':'⌄')+'</span></button>';
  }).join(''):scheduleEmptyState();
+ const savedWeek=$('showSavedWeek');if(savedWeek)savedWeek.onclick=jumpToSavedWeek;
  document.querySelectorAll('[data-day]').forEach(e=>e.onclick=()=>{S.selected=Number(e.dataset.day);S.expanded=null;schedule()});
  document.querySelectorAll('[data-lesson]').forEach(e=>e.onclick=()=>{S.expanded=S.expanded===e.dataset.lesson?null:e.dataset.lesson;schedule()});
 }
