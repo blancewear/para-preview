@@ -32,7 +32,7 @@ jobs:
           css = Path("onboarding-v2.css").read_text()
           js = Path("onboarding-v2.js").read_text()
           assert 'onboarding-v2.css?v=6' in html
-          assert 'onboarding-v2.js?v=8' in html
+          assert 'onboarding-v2.js?v=9' in html
           assert 'id="onboard"' in html
           assert "obBoot();" not in html
           assert "border-radius:999px" in css
@@ -40,7 +40,7 @@ jobs:
           assert "p2-count" not in js
           assert "p2-kicker" not in js
           app = Path("para-ui-v6.css").read_text()
-          assert 'para-ui-v6.css?v=3' in html
+          assert 'para-ui-v6.css?v=4' in html
           assert 'aria-current="page"' in html
           assert "e.setAttribute('aria-current','page')" in html
           assert 'aria-pressed=' in html
@@ -72,11 +72,16 @@ jobs:
           assert ".clean-row" in app and ".lesson" in app
           assert "obBoot()" not in html
           logo = Path("para-logo.svg").read_text()
-          assert 'viewBox="0 0 806 201"' in logo
+          assert 'viewBox="0 0 799 193"' in logo
           assert html.count('class="logo para-logo"') == 3
-          assert 'class="p2-big-logo" src="./para-logo.svg"' in js
+          assert 'class="p2-big-logo" src="./para-logo.svg?v=2"' in js
           assert "function drawLanguages()" in js
           assert "function drawSubgroups()" in js
+          assert 'p2-pill-teacher' in js
+          assert '.p2-pill-teacher' in app
+          assert '<image' not in logo and 'data:image/png' not in logo
+          assert 'Соколова М.Л.' in Path("data/schedules/21096.json").read_text()
+          assert 'Плотников А.А.' in Path("data/schedules/21096.json").read_text()
           data = json.loads(Path("data/schedules/21096.json").read_text())
           lessons = [x for p in data["periods"] for x in p.get("lessons", [])]
           assert any(x.get("subgroup") == "171605_01" for x in lessons)
