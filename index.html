@@ -214,31 +214,77 @@ function mapLesson(l,i){
  if(!l.subgroup && l.stream && l.stream.split(',').map(x=>x.trim()).includes(S.settings.group))sub='all';
  return {id:l.source_lesson_id||`${l.date}/${l.start}/${i}`, date:l.date,start:String(l.start).slice(0,5),end:String(l.end).slice(0,5),name:l.subject,type:l.lesson_type||'Занятие',room:l.room||'не указана',building:l.building||l.address||'',teacher:l.teacher||'Преподаватель не указан',sub};
 }
+let PARA_SCHEDULE_REQUEST=0;
+// Only the most recent selection can change the schedule or its local cache.
 async function fetchSchedule(){
- await ensureCatalog();
- const group=S.settings.group.trim(); const key='para_verified_'+(S.settings.groupId||group);
+ const ticket=++PARA_SCHEDULE_REQUEST;
+ const current=()=>ticket===PARA_SCHEDULE_REQUEST;
+ const group=S.settings.group.trim();
+ const selectedId=String(S.settings.groupId||'');
+ const selectedInstitution=String(S.settings.institutionId||'');
+ const key='para_verified_'+(selectedId||group);
+ const clear=()=>{
+   R.lessons=[];R.mode='demo';R.groupSourceId=null;
+   R.lastSuccess=null;R.sourceStatus='unavailable';
+ };
+ function cachedFor(id){
+   try{
+     const saved=JSON.parse(localStorage.getItem(key)||'null');
+     // Legacy untagged caches may have been written during a group-switch race.
+     if(saved&&String(saved.groupId)===String(id)&&Array.isArray(saved.lessons)&&saved.lessons.length){
+       R.lessons=saved.lessons;R.mode='cached';R.groupSourceId=id;
+       R.lastSuccess=saved.lastSuccess;R.sourceStatus='unavailable';
+       return true;
+     }
+   }catch(e){}
+   return false;
+ }
+ function finish(){
+   if(!current())return;
+   if(R.mode!=='demo'){
+     S.week=0;S.selected=(new Date().getDay()+6)%7;
+   }
+   schedule();renderCourseStreams();
+ }
+ clear();schedule();
  try{
-  const res=await fetch(`/api/v1/groups?q=${encodeURIComponent(group)}&limit=100`,{cache:'no-store'});
-  if(!res.ok)throw Error('catalog request failed');
-  const groups=await res.json();const match=groups.find(x=>x.number===group && String(x.id)===String(S.settings.groupId))||groups.find(x=>x.number===group && (!S.settings.institutionId||String(x.institution_id)===String(S.settings.institutionId)));
-  if(!match){const local=JSON.parse(localStorage.getItem(key)||'null');if(local&&Array.isArray(local.lessons)&&local.lessons.length){R.lessons=local.lessons;R.lastSuccess=local.lastSuccess;R.sourceStatus='unavailable';R.mode='cached'}else{R.mode='demo';R.lessons=[]}schedule();return}
-  R.groupSourceId=match.id;S.settings.groupId=String(match.id);S.settings.institutionId=String(match.institution_id);persist();
-  const sr=await fetch(`/api/v1/schedule?group_id=${encodeURIComponent(match.id)}`,{cache:'no-store'});
-  if(!sr.ok)throw Error('schedule request failed');
-  const data=await sr.json();
-  if(!data.cached){const local=JSON.parse(localStorage.getItem(key)||'null');if(local&&Array.isArray(local.lessons)&&local.lessons.length){R.lessons=local.lessons;R.lastSuccess=local.lastSuccess;R.sourceStatus='unavailable';R.mode='cached'}else{R.mode='demo';R.lessons=[]}schedule();return}
-  R.lessons=(data.periods||[]).flatMap(p=>p.lessons||[]).map(mapLesson);
-  R.mode='api';R.sourceStatus=data.source_status;R.lastSuccess=data.last_success;
-  try{const statusResponse=await fetch('/api/v1/mirror/status',{cache:'no-store'});if(statusResponse.ok){const status=await statusResponse.json();R.sourceStatus=status.source_status||'unknown'}}catch(e){}
-  try{localStorage.setItem(key,JSON.stringify({lessons:R.lessons,lastSuccess:R.lastSuccess,sourceStatus:R.sourceStatus}))}catch(e){}
- }catch(err){
-  try{const saved=JSON.parse(localStorage.getItem(key)); if(saved&&Array.isArray(saved.lessons)&&saved.lessons.length){R.lessons=saved.lessons;R.mode='cached';R.lastSuccess=saved.lastSuccess;R.sourceStatus='unavailable'}else{R.mode='demo';R.lessons=[]}}catch(e){R.mode='demo';R.lessons=[]}
+   await ensureCatalog();
+   if(!current())return;
+   const res=await fetch('/api/v1/groups?q='+encodeURIComponent(group)+'&limit=100',{cache:'no-store'});
+   if(!res.ok)throw Error('Group catalogue unavailable');
+   const groups=await res.json();
+   if(!current())return;
+   const match=groups.find(x=>x.number===group&&String(x.id)===selectedId)
+      ||groups.find(x=>x.number===group&&(!selectedInstitution||String(x.institution_id)===selectedInstitution));
+   if(!match){clear();finish();return}
+   const gid=String(match.id);
+   // Save verified group identity, never just a non-unique display number.
+   S.settings.groupId=gid;S.settings.institutionId=String(match.institution_id);
+   R.groupSourceId=gid;persist();
+   const sr=await fetch('/api/v1/schedule?group_id='+encodeURIComponent(gid),{cache:'no-store'});
+   if(!sr.ok)throw Error('Group schedule unavailable');
+   const data=await sr.json();
+   if(!current())return;
+   if(data&&String(data.group_id)===gid&&(!data.group_number||data.group_number===group)
+      &&data.cached===true&&Array.isArray(data.periods)){
+     const lessons=data.periods.flatMap(p=>Array.isArray(p.lessons)?p.lessons:[]);
+     if(lessons.length){
+       R.lessons=lessons.map(mapLesson);
+       R.mode='api';R.groupSourceId=gid;
+       R.sourceStatus=data.source_status||'cached';R.lastSuccess=data.last_success;
+       try{localStorage.setItem(key,JSON.stringify({
+         groupId:gid,lessons:R.lessons,lastSuccess:R.lastSuccess,sourceStatus:R.sourceStatus
+       }))}catch(e){}
+       finish();return;
+     }
+   }
+   if(!cachedFor(gid))clear();
+ }catch(e){
+   if(!current())return;
+   const gid=String(S.settings.groupId||selectedId);
+   if(!cachedFor(gid))clear();
  }
- if(R.mode!=='demo'){
-   const now=new Date();S.week=0;S.selected=(now.getDay()+6)%7;
- }
- schedule();
- renderCourseStreams();
+ finish();
 }
 
 loadInstitutions();tab('schedule');fetchSchedule();
