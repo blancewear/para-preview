@@ -35,6 +35,22 @@ class Safety(unittest.TestCase):
         self.assertEqual(len(collector.parse(sample("1.5.15"),"1.5.15")["lessons"]),3)
     def test_wrong_group_rejected(self):
         with self.assertRaises(ValueError):collector.parse(sample(),"171604")
+    def test_real_narfu_practice_and_repeated_attestation_types(self):
+        # Type labels observed in failed verified RUZ sync batches.
+        examples=(
+            ("Практика", "Учебная ознакомительная практика, психолого-педагогический практикум"),
+            ("Практические занятия (Практическая подготовка)", "ВУЦ"),
+            ("Вторая повторная промежуточная аттестация (комиссия)", "Математическая статистика"),
+        )
+        for lesson_type,subject in examples:
+            with self.subTest(lesson_type=lesson_type):
+                html=sample("521505").replace("Лекция История и философия",lesson_type+" "+subject)
+                result=collector.parse(html,"521505")
+                matching=[l for l in result["lessons"] if l["subject"].startswith(subject)]
+                self.assertEqual(len(matching),1)
+                self.assertEqual(matching[0]["lesson_type"],lesson_type)
+                self.assertEqual(matching[0]["teacher"],"Опенков М.Ю.")
+
     def test_unknown_lesson_rejected(self):
         with self.assertRaisesRegex(ValueError,"Unknown lesson type"):
             collector.parse(sample().replace("Лекция История","Неизвестно История"),"171605")
