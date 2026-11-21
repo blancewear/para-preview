@@ -117,6 +117,7 @@ async function ensureCatalog(){
  finally{if(!PARA_CATALOG_READY)PARA_CATALOG_PROMISE=null}
 }
 const PARA_SCHEDULE_IDS = new Set(['21096']);
+const confirmedEmptyDates = new Map();
 let PARA_SCHEDULE_INDEX_PROMISE=null;
 let PARA_SCHEDULE_INDEX_READY=false;
 async function ensureScheduleIndex(){
@@ -127,6 +128,9 @@ async function ensureScheduleIndex(){
      if(!r.ok)return false;
      const data=await r.json();
      if(!Array.isArray(data.cached_ids))return false;
+     for(const [id, dates] of Object.entries(data.empty_dates || {})){
+       if(Array.isArray(dates))confirmedEmptyDates.set(id,new Set(dates));
+     }
      for(const id of data.cached_ids)if(/^\d{1,12}$/.test(String(id)))PARA_SCHEDULE_IDS.add(String(id));
      PARA_SCHEDULE_INDEX_READY=true;
      return true;
@@ -281,12 +285,13 @@ window.fetch = async function(input,options) {
 if(!window.PARA_SETUP_DONE)document.documentElement.classList.add('para-first');
 const S={tab:'schedule',selected:(new Date().getDay()+6)%7,week:0,offline:false,expanded:null,settings:{group:'171605',groupId:'21096',institutionId:'28',streams:{},subgroup:'all',vk:'',reminders:true,minutes:'20',scope:'first',changes:true,rooms:true}};
 try{const saved=JSON.parse(localStorage.getItem('para_editorial_v02'));if(saved&&typeof saved==='object')S.settings={...S.settings,...saved}}catch(e){}
-const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const names=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];const fmt=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long'});const monthFmt=new Intl.DateTimeFormat('ru-RU',{month:'long'});const base=new Date();base.setHours(12,0,0,0);base.setDate(base.getDate()-(base.getDay()+6)%7);function dateOf(i){const d=new Date(R.monday);d.setDate(d.getDate()+S.week*7+i);return d}function lessonsFor(i){if(R.mode==='api'||R.mode==='cached'){const ymd=localDate(dateOf(i));return R.lessons.filter(l=>l.date===ymd).filter(l=>{const chosen=S.settings.streams?.[l.name];return !chosen||chosen==='all'||l.sub==='all'||l.sub===chosen||String(l.sub).split(',').some(x=>x.trim()===chosen)})}return []}function persist(){try{localStorage.setItem('para_editorial_v02',JSON.stringify(S.settings))}catch(e){}}
+const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const names=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];const fmt=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long'});const monthFmt=new Intl.DateTimeFormat('ru-RU',{month:'long'});const base=new Date();base.setHours(12,0,0,0);base.setDate(base.getDate()-(base.getDay()+6)%7);function dateOf(i){const d=new Date(R.monday);d.setDate(d.getDate()+S.week*7+i);return d}function lessonsFor(i){if(R.mode==='api'||R.mode==='cached'){const ymd=localDate(dateOf(i));if(confirmedEmptyDates.get(String(S.settings.groupId))?.has(ymd))return [];return R.lessons.filter(l=>l.date===ymd).filter(l=>{const chosen=S.settings.streams?.[l.name];return !chosen||chosen==='all'||l.sub==='all'||l.sub===chosen||String(l.sub).split(',').some(x=>x.trim()===chosen)})}return []}function persist(){try{localStorage.setItem('para_editorial_v02',JSON.stringify(S.settings))}catch(e){}}
 function scheduleEmptyState(){
  const groupId=String(S.settings.groupId||'');
  const url=/^[0-9]{1,12}$/.test(groupId)?'https://ruz.narfu.ru/?group='+encodeURIComponent(groupId)+'&timetable=':'https://ruz.narfu.ru/';
  const official='<a href="'+url+'" target="_blank" rel="noopener noreferrer">Посмотреть официальное расписание РУЗ ↗</a>';
  if(R.loading)return '<div class="empty" role="status">Загружаем расписание…</div>';
+ if(confirmedEmptyDates.get(groupId)?.has(localDate(dateOf(S.selected))))return '<div class="empty">РУЗ не опубликовал занятия на этот день.<div class="small">'+official+'</div></div>';
  if(R.mode==='demo')return '<div class="empty">Расписание группы '+esc(S.settings.group)+' ещё не загружено в PARA.<div class="small">'+official+'</div></div>';
  const day=localDate(dateOf(S.selected));
  const covered=Array.isArray(R.periods)&&R.periods.some(p=>p&&typeof p.start==='string'&&typeof p.end==='string'&&p.start<=day&&day<=p.end);
@@ -550,7 +555,7 @@ async function fetchSchedule(){
  if(!hadCache)clear();
  R.loading=!hadCache;schedule();
  try{
-   await ensureCatalog();
+   await Promise.all([ensureCatalog(),ensureScheduleIndex()]);
    if(!current())return;
    const res=await fetch('/api/v1/groups?q='+encodeURIComponent(group)+'&limit=100',{cache:'no-store'});
    if(!res.ok)throw Error('Group catalogue unavailable');

@@ -311,6 +311,7 @@ class Safety(unittest.TestCase):
             self.assertEqual((out["groups_total"],out["groups_completed"]), (160,160))
             self.assertEqual((out["groups_ok"],out["groups_empty"],out["groups_failed"]),(158,1,1))
             self.assertEqual(out["groups_changed"],158)
+            self.assertEqual(out["empty_dates"], {groups[1]["id"]: ["2026-11-23"]})
             self.assertEqual(len(set(visited)),160)
             self.assertEqual(len(visited),160)
             self.assertTrue(1<=maximum[0]<=3)
