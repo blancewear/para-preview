@@ -1,1 +1,1 @@
-{"cursor":0,"failures":{"20598":{"attempts":1,"last_failed_at":"2026-11-21T03:00:00+00:00"},"20930":{"attempts":1,"last_failed_at":"2026-11-21T02:55:01+00:00"},"21106":{"attempts":1,"last_failed_at":"2026-11-21T02:54:36+00:00"}},"last_full_scan":"2026-11-21T03:05:15+00:00","last_run":"2026-11-21T03:05:15+00:00"}
+{"cursor":0,"failures":{"20344":{"attempts":1,"last_failed_at":"2026-11-21T04:04:36+00:00"},"20379":{"attempts":1,"last_failed_at":"2026-11-21T04:04:58+00:00"}},"last_full_scan":"2026-11-21T04:08:19+00:00","last_run":"2026-11-21T04:08:19+00:00"}
