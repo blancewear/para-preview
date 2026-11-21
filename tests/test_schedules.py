@@ -14,6 +14,32 @@ def sample(number="171605"):
     <p>3 12:00–13:35 Лекция История и философия (подготовка к экзамену) (Опенков М.Ю.) ауд. 211, наб. Северной Двины, д. 17</p></html>"""
 
 class Safety(unittest.TestCase):
+    def test_full_scan_retries_disconnect_once(self):
+        from http.client import RemoteDisconnected
+
+        groups = [
+            {"id": str(23000 + i), "number": str(100000 + i), "institution_id": "28"}
+            for i in range(150)
+        ]
+        calls = {"23000": 0, "23001": 0}
+
+        def get(gid):
+            if gid in calls:
+                calls[gid] += 1
+                if gid == "23001" or calls[gid] == 1:
+                    raise RemoteDisconnected("test disconnect")
+            return sample(groups[int(gid) - 23000]["number"])
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            collector.write(root / "catalog.json", {"groups": groups})
+            report = collector.collect_all(root, get=get, nap=lambda _: None)
+            self.assertEqual(calls, {"23000": 2, "23001": 2})
+            self.assertEqual(report["groups_completed"], 150)
+            self.assertEqual(report["groups_ok"], 149)
+            self.assertEqual(report["groups_failed"], 1)
+            self.assertEqual(report["errors"][0]["id"], "23001")
+
     def test_streams_teacher_and_parentheses(self):
         p=collector.parse(sample(),"171605")
         self.assertEqual(len(p["lessons"]),3)

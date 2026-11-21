@@ -8,12 +8,17 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 from datetime import date, datetime, timezone
 from html.parser import HTMLParser
+from http.client import RemoteDisconnected
 from pathlib import Path
+from ssl import SSLEOFError
+from urllib.error import URLError
 from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 BASE = "https://ruz.narfu.ru/"
 MAX = 5_000_000
+FULL_SCAN_RETRY_LIMIT = 12
+TRANSIENT_NETWORK_ERRORS = (RemoteDisconnected, ConnectionResetError, TimeoutError, SSLEOFError)
 DAY = re.compile(r"(?:понедельник|вторник|среда|четверг|пятница|суббота|воскресенье),?\s+(\d{1,2})\.(\d{2})\.(\d{4})",re.I)
 PAIR = re.compile(r"(?<![\d:])(?:([1-9])\s+)?(\d{1,2}):(\d{2})\s*[—–-]\s*(\d{1,2}):(\d{2})\s+")
 GROUP = re.compile(r"\b(?:Группа|гр\.)\s*[:№#-]?\s*([0-9А-ЯA-Z](?:[0-9А-ЯA-Z_./-]{1,38}[0-9А-ЯA-Z]))",re.I)
@@ -302,8 +307,9 @@ def collect_all(root, *, get=get_page, nap=time.sleep, clock=stamp, workers=3, m
     started = time.monotonic()
     next_at = [started]
     pacing = Lock()
+    retries_remaining = FULL_SCAN_RETRY_LIMIT
 
-    def fetch_one(group):
+    def paced_get(gid):
         # Allocate a non-overlapping request start slot under a short lock.
         # Never sleep while holding it: other workers can reserve later slots.
         with pacing:
@@ -313,8 +319,23 @@ def collect_all(root, *, get=get_page, nap=time.sleep, clock=stamp, workers=3, m
         wait = slot - time.monotonic()
         if wait > 0:
             nap(wait)
+        return get(gid)
+
+    def fetch_one(group):
+        nonlocal retries_remaining
+        gid = str(group["id"])
         try:
-            raw = get(str(group["id"]))
+            try:
+                raw = paced_get(gid)
+            except (URLError, *TRANSIENT_NETWORK_ERRORS) as exc:
+                reason = exc.reason if isinstance(exc, URLError) else exc
+                if not isinstance(reason, TRANSIENT_NETWORK_ERRORS):
+                    raise
+                with pacing:
+                    if retries_remaining <= 0:
+                        raise
+                    retries_remaining -= 1
+                raw = paced_get(gid)
             if verified_empty_window(raw, group["number"]):
                 return group, "empty", None, None
             return group, "ok", parse(raw, group["number"]), None
