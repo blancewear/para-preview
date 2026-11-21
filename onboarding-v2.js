@@ -236,7 +236,7 @@ function reopen(){
  P.selected={};P.languageCategory=null;P.sourceMissing=false;P.screenSeq++;P.searchSeq++;
  root.classList.remove('hidden','p2-leave');
  document.documentElement.classList.add('para-first');
- go(0);
+ go(1);
 }
 window.paraOpenOnboarding=reopen;
 
