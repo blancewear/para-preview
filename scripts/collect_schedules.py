@@ -76,20 +76,25 @@ EMPTY_NOTE = re.compile(
 )
 
 
-def verified_empty_window(html, expected):
+def verified_empty_dates(html, expected):
     """A positive, identity-checked source statement about its visible window.
 
     Not evidence of semester-wide absence; never erase an existing snapshot.
     A lesson-shaped time entry blocks this classification even if a banner exists.
     """
     if not 120 <= len(html) <= MAX:
-        return False
+        return []
     p = Text()
     p.feed(html)
     visible = " ".join(p.words)
     ids = {x[1].upper() for x in GROUP.finditer(visible)}
-    return (ids == {expected.upper()} and bool(DAY.search(visible))
-            and not PAIR.search(visible) and bool(EMPTY_NOTE.search(visible)))
+    if ids != {expected.upper()} or PAIR.search(visible) or not EMPTY_NOTE.search(visible):
+        return []
+    return sorted({date(int(m[3]), int(m[2]), int(m[1])).isoformat() for m in DAY.finditer(visible)})
+
+
+def verified_empty_window(html, expected):
+    return bool(verified_empty_dates(html, expected))
 
 
 def parse_lesson(segment,day):
@@ -336,8 +341,9 @@ def collect_all(root, *, get=get_page, nap=time.sleep, clock=stamp, workers=3, m
                         raise
                     retries_remaining -= 1
                 raw = paced_get(gid)
-            if verified_empty_window(raw, group["number"]):
-                return group, "empty", None, None
+            empty_dates = verified_empty_dates(raw, group["number"])
+            if empty_dates:
+                return group, "empty", empty_dates, None
             return group, "ok", parse(raw, group["number"]), None
         except (OSError, ValueError, RuntimeError) as exc:
             return group, "failed", None, type(exc).__name__ + ": " + str(exc)[:120]
@@ -356,6 +362,7 @@ def collect_all(root, *, get=get_page, nap=time.sleep, clock=stamp, workers=3, m
         "groups_empty": 0,
         "groups_failed": 0,
         "groups_changed": 0,
+        "empty_dates": {},
         "errors": [],
         "full_refresh": True,
         "scan_workers": workers,
@@ -377,6 +384,7 @@ def collect_all(root, *, get=get_page, nap=time.sleep, clock=stamp, workers=3, m
                     outcome = "failed"
                     error = type(exc).__name__ + ": " + str(exc)[:120]
             if outcome == "empty":
+                report["empty_dates"][gid] = parsed
                 report["groups_empty"] += 1
                 print("EMPTY", group["number"], gid, flush=True)
             elif outcome == "failed":
