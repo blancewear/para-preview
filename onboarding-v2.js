@@ -232,11 +232,11 @@ async function finish(){
 }
 function reopen(){
  clearIntro();
- P.step=0;P.school=null;P.course=null;P.group=null;P.query='';P.subChoices=[];P.langChoices=[];
+ P.step=1;P.school=null;P.course=null;P.group=null;P.query='';P.subChoices=[];P.langChoices=[];
  P.selected={};P.languageCategory=null;P.sourceMissing=false;P.screenSeq++;P.searchSeq++;
  root.classList.remove('hidden','p2-leave');
  document.documentElement.classList.add('para-first');
- go(0);
+ go(1);
 }
 window.paraOpenOnboarding=reopen;
 

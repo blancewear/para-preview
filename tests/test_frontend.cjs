@@ -58,6 +58,9 @@ assert.ok(setup.includes('Копия расписания загружена'), 
 assert.ok(html.includes('PARA_SCHEDULE_INDEX_READY=true'), 'Availability status should only be shown after verified index loads');
 assert.ok(html.includes('if(!PARA_CATALOG_READY)PARA_CATALOG_PROMISE=null'), 'Transient catalogue failures must be retryable');
 assert.ok(setup.includes('window.paraOpenOnboarding=reopen'),'Changing groups must reopen setup');
+const reopenBody=(setup.match(/function reopen\(\)\{([\s\S]*?)\n\}/)||[])[1]||'';
+assert.ok(reopenBody.includes('P.step=1')&&reopenBody.includes('go(1)'),'Changing groups must start at school selection');
+assert.ok(!reopenBody.includes('P.step=0')&&!reopenBody.includes('go(0)'),'Changing groups must not repeat university selection');
 assert.ok(setup.includes('optionsFromLessons'),'Subgroups must come from the real schedule');
 assert.ok(setup.includes('p2-pill-teacher'), 'RUZ teacher name must be present in option cards');
 assert.ok(appCss.includes('.p2-pill-teacher'), 'Teacher labels must be styled and readable');
